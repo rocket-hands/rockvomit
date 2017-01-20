@@ -3,7 +3,7 @@ import 'pixi.js'
 import p2 from 'p2'
 import { Howl } from 'howler'
 
-const FPS = 10
+const FPS = 60
 
 const SOUNDS = [
   'wilhelm',
@@ -43,6 +43,7 @@ const TEXTURES = [
 
 class Game {
   constructor (elementId, data) {
+    this.state = 'waiting'
     this.data = data
     this.gametime = 0.0
     this.frequency = 1.0 / FPS
@@ -55,13 +56,27 @@ class Game {
   }
 
   boot () {
+    this.state = 'booting'
     this.init()
     this.load()
   }
 
   run () {
+    this.state = 'running'
     this.spawn()
-    // this.loop()
+    this.loop()
+  }
+
+  stop () {
+    this.state = 'stopping'
+    for (var sound of SOUNDS) {
+      this.sounds[sound].unload()
+    }
+    for (var texture of TEXTURES) {
+      this.textures[texture].destroy(true)
+    }
+    this.viewport.destroy()
+    this.game.destroy()
   }
 
   update (dt) {
@@ -69,10 +84,6 @@ class Game {
     this.sprite.position.x = this.head.position[0]
     this.sprite.position.y = this.head.position[1]
     this.sprite.rotation = this.head.angle
-  }
-
-  render () {
-    this.game.renderer.render(this.game.stage)
   }
 
   play (sound) {
@@ -129,14 +140,11 @@ class Game {
   }
 
   loop (timestamp = 0.0) {
-    let dt = timestamp - this.gametime
-    while (dt > this.frequency) {
-      this.update(this.frequency)
-      dt -= this.frequency
-      this.gametime += this.frequency
+    if (this.state !== 'running') {
+      return
     }
-    this.render()
-    this.data.score = this.gametime
+    this.update(this.frequency)
+    this.game.renderer.render(this.game.stage)
     requestAnimationFrame(this.loop.bind(this))
   }
 }

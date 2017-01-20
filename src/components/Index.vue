@@ -22,11 +22,13 @@
       }
     },
     methods: {
-      init () {
-        Loading.show()
-        game = new Game('viewport', this.$data)
-        game.boot()
-        Loading.hide()
+    },
+    mounted () {
+      Loading.show()
+      game = new Game('viewport', this.$data)
+      game.boot()
+      Loading.hide()
+      if (PROD) {
         Dialog.create({
           title: 'Get Ready',
           message: 'Start that crazy musak?',
@@ -41,12 +43,12 @@
             }
           ]
         })
+      } else {
+        game.run()
       }
     },
-    mounted () {
-      this.init()
-    },
     beforeDestroy () {
+      game.stop()
     }
   }
 </script>
