@@ -57,7 +57,7 @@
       sprite.on('mousedown', this.scream)
       sprite.on('touchstart', this.scream)
 
-      let container = new PIXI.DisplayObjectContainer()
+      let container = new PIXI.Container()
       game.stage.addChild(container)
 
       container.position.x = game.renderer.width / 2
