@@ -92,7 +92,7 @@ class Game {
   }
 
   init () {
-    this.game = new PIXI.Application(800, 800, { view: this.canvas })
+    this.game = new PIXI.Application(800, 500, { view: this.canvas })
 
     this.viewport = new PIXI.Container()
     this.game.stage.addChild(this.viewport)
@@ -101,11 +101,13 @@ class Game {
   }
 
   resize () {
-    let ratio = this.canvas.scrollWidth / this.canvas.scrollHeight
     this.viewport.position.x = this.game.renderer.width / 2 + this.camera.x
     this.viewport.position.y = this.game.renderer.height / 2 + this.camera.y
+    let ratio = this.canvas.scrollWidth / this.canvas.scrollHeight
     this.viewport.scale.x = this.camera.z
-    this.viewport.scale.y = -this.camera.z * ratio
+    this.viewport.scale.y = -this.camera.z
+    if (ratio > 1.6) this.viewport.scale.x /= (ratio / 1.6)
+    if (ratio < 1.6) this.viewport.scale.y *= (ratio / 1.6)
   }
 
   load () {
@@ -122,6 +124,13 @@ class Game {
   }
 
   spawn () {
+    let stage = new PIXI.Sprite(this.textures['stage'])
+    stage.anchor.x = 0.5
+    stage.anchor.y = 0.5
+    stage.scale.x = 0.01
+    stage.scale.y = 0.01
+    this.viewport.addChild(stage)
+
     this.sprite = new PIXI.Sprite(this.textures['dave_head'])
     this.sprite.anchor.x = 0.5
     this.sprite.anchor.y = 0.5
@@ -132,12 +141,12 @@ class Game {
     this.sprite.on('touchstart', () => { this.play('wilhelm') })
     this.viewport.addChild(this.sprite)
 
-    let ground = new p2.Body({ position: [0, -1] })
+    let ground = new p2.Body({ position: [0, -2.5] })
     ground.addShape(new p2.Plane())
     this.world.addBody(ground)
 
-    this.head = new p2.Body({ mass: 1, position: [0, 2], angularVelocity: 1 })
-    this.head.addShape(new p2.Box({ width: 2, height: 1 }))
+    this.head = new p2.Body({ mass: 1, position: [0, 3], angularVelocity: 10 })
+    this.head.addShape(new p2.Box({ width: 1, height: 1 }))
     this.world.addBody(this.head)
 
     if (PROD) {
