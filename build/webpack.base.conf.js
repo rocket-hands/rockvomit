@@ -74,6 +74,14 @@ module.exports = {
           limit: 10000,
           name: 'fonts/[name].[hash:7].[ext]'
         }
+      },
+      {
+        test: /\.(mp3|wav|webm)(\?.*)?$/,
+        loader: 'url-loader',
+        options: {
+          limit: 10000,
+          name: 'audio/[name].[hash:7].[ext]'
+        }
       }
     ]
   },
