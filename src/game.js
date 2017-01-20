@@ -63,6 +63,7 @@ class Game {
 
   run () {
     this.state = 'running'
+    this.resize()
     this.spawn()
     this.loop()
   }
@@ -96,12 +97,15 @@ class Game {
     this.viewport = new PIXI.Container()
     this.game.stage.addChild(this.viewport)
 
+    this.world = new p2.World()
+  }
+
+  resize () {
+    let ratio = this.canvas.scrollWidth / this.canvas.scrollHeight
     this.viewport.position.x = this.game.renderer.width / 2 + this.camera.x
     this.viewport.position.y = this.game.renderer.height / 2 + this.camera.y
     this.viewport.scale.x = this.camera.z
-    this.viewport.scale.y = -this.camera.z
-
-    this.world = new p2.World()
+    this.viewport.scale.y = -this.camera.z * ratio
   }
 
   load () {
@@ -136,15 +140,28 @@ class Game {
     this.head.addShape(new p2.Box({ width: 2, height: 1 }))
     this.world.addBody(this.head)
 
-    this.play('music')
+    if (PROD) {
+      this.play('music')
+    }
   }
 
-  loop (timestamp = 0.0) {
+  loop (ms = 0.0) {
     if (this.state !== 'running') {
       return
     }
-    this.update(this.frequency)
-    this.game.renderer.render(this.game.stage)
+    let dt = ms / 1000 - this.gametime
+    if (ms < 2000) {
+      this.gametime = ms / 1000
+      this.viewport.visible = false
+    } else {
+      this.viewport.visible = true
+      while (dt > this.frequency) {
+        dt -= this.frequency
+        this.gametime += this.frequency
+        this.update(this.frequency)
+      }
+    }
+    this.data.score = this.gametime
     requestAnimationFrame(this.loop.bind(this))
   }
 }

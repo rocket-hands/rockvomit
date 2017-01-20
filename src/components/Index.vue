@@ -22,6 +22,9 @@
       }
     },
     methods: {
+      resize () {
+        game.resize()
+      }
     },
     mounted () {
       Loading.show()
@@ -46,8 +49,10 @@
       } else {
         game.run()
       }
+      window.addEventListener('resize', this.resize)
     },
     beforeDestroy () {
+      window.removeEventListener('resize', this.resize)
       game.stop()
     }
   }
