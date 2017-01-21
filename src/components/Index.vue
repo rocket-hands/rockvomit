@@ -28,7 +28,7 @@
         score: 0,
         debug: true,
         music: false,
-        message: 'Press a button you two!!'
+        message: ''
       }
     },
     methods: {
