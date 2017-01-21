@@ -60,11 +60,11 @@ class Entity {
       delete (physics.type)
       this.body = new p2.Body(physics)
       switch (type) {
-          case 'plane':
-            this.body.addShape(new p2.Plane())
-            break
-          case 'box':
-          default:
+        case 'plane':
+          this.body.addShape(new p2.Plane())
+          break
+        case 'box':
+        default:
           this.body.addShape(new p2.Box({
             width: this.sprite.width * 0.7,
             height: this.sprite.height * 0.7
@@ -80,12 +80,12 @@ class Entity {
     if (game.world && this.body) {
       game.world.addBody(this.body)
     }
-        }
+  }
 
   popGame (game) {
     if (game.world && this.body) {
       game.world.removeBody(this.body)
-      }
+    }
     if (game.viewport && this.sprite) {
       game.viewport.removeChild(this.sprite)
       this.sprite.destroy(true, true)
@@ -176,7 +176,7 @@ class Ragdoll extends Entity {
   popGame (game) {
     for (var name in this.parts) {
       this.parts[name].popGame(game)
-  }
+    }
   }
 
   update (dt) {
@@ -356,9 +356,9 @@ class Game {
   addTextures (callback) {
     this.textures = {}
     for (var texture of TEXTURES) {
-        this.textures[texture] = PIXI.loader.resources[texture].texture
+      this.textures[texture] = PIXI.loader.resources[texture].texture
     }
-      callback()
+    callback()
   }
 
   addEntity (name, texture = null, scale = 1.0, physics = null) {

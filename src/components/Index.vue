@@ -27,7 +27,7 @@
       return {
         score: 0,
         debug: DEV,
-        music: PROD
+        music: PROD,
         message: ''
       }
     },
