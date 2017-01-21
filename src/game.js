@@ -234,8 +234,10 @@ class Game {
     for (var texture of TEXTURES) {
       this.textures[texture].destroy(true)
     }
+    PIXI.loader.reset()
     this.viewport.destroy()
     this.game.destroy()
+    this.gametime = 0
     window.game = undefined
   }
 
@@ -285,14 +287,16 @@ class Game {
     for (var texture of TEXTURES) {
       PIXI.loader.add(texture, require(`assets/${texture}.png`))
     }
-    PIXI.loader.once('complete', () => {
-      this.textures = {}
-      for (var texture of TEXTURES) {
-        this.textures[texture] = PIXI.loader.resources[texture].texture
-      }
-      callback()
-    })
+    PIXI.loader.once('complete', () => { this.addTextures(callback) })
     PIXI.loader.load()
+  }
+
+  addTextures (callback) {
+    this.textures = {}
+    for (var texture of TEXTURES) {
+      this.textures[texture] = PIXI.loader.resources[texture].texture
+    }
+    callback()
   }
 
   addEntity (name, texture = null, scale = 1.0, physics = null) {
