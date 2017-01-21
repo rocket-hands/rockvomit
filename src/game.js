@@ -156,7 +156,7 @@ class Ragdoll extends Entity {
   addPart (textures, name, offset, mass) {
     this.parts[name] = new Entity(textures[`${this.name}_${name}`], this.scale, {
       mass: mass,
-      position: offset,
+      position: [this.position[0] + offset[0], this.position[1] + offset[1]],
       angularVelocity: 0
     })
   }
@@ -369,10 +369,16 @@ class Game {
   spawn () {
     this.addEntity('stage', this.textures.stage, 0.01)
 
-    this.entities['doll'] = new Ragdoll('jack', [0, 0], 0.005, this.textures)
-    this.entities['doll'].pushGame(this)
+    this.entities['jack'] = new Ragdoll('jack', [-2, 0], 0.004, this.textures)
+    this.entities['jack'].pushGame(this)
+
+    this.entities['dave'] = new Ragdoll('dave', [2, 0], 0.002, this.textures)
+    this.entities['dave'].pushGame(this)
 
     this.addEntity('ground', null, null, { type: 'plane', position: [0, -2.5] })
+    this.addEntity('right_wall', null, null, { type: 'plane', position: [4, 0], angle: Math.PI / 2 })
+    this.addEntity('left_wall', null, null, { type: 'plane', position: [-4, 0], angle: (3 * Math.PI) / 2 })
+
     if (this.data.music) {
       this.sounds.music.play()
     }
