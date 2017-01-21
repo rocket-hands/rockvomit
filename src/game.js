@@ -85,8 +85,8 @@ class Entity {
         case 'box':
         default:
           shape = new p2.Box({
-            width: this.sprite.width * 0.7,
-            height: this.sprite.height * 0.7
+            width: this.sprite.width * 1,
+            height: this.sprite.height * 1
           })
           shape.collisionGroup = group
           shape.collisionMask = mask
@@ -161,27 +161,41 @@ class Ragdoll extends Entity {
     this.position = position
     this.scale = scale
     this.parts = {}
+    this.joints = []
     this.extremeties = {
-      left_hand: [0.65, -0.6],
-      right_hand: [-0.65, -0.6],
-      left_foot: [0.3, 1.1],
-      right_foot: [-0.3, 1.1]
+      left_hand: [[-0.65, -0.4], 'left_upper_arm'],
+      right_hand: [[0.65, -0.4], 'right_upper_arm'],
+      left_foot: [[-0.3, 1.1], 'left_shin'],
+      right_foot: [[0.3, 1.1], 'right_shin']
     }
-    this.addPart(textures, 'left_hand', this.extremeties.left_hand, 0.1)
-    this.addPart(textures, 'left_forearm', [0.7, -1], 0.1)
-    this.addPart(textures, 'left_upper_arm', [0.6, -1.5], 0.1)
-    this.addPart(textures, 'left_foot', this.extremeties.left_foot, 0.1)
-    this.addPart(textures, 'left_shin', [0.3, 0.7], 0.1)
-    this.addPart(textures, 'left_upper_leg', [0.3, 0.2], 0.1)
-    this.addPart(textures, 'right_hand', this.extremeties.right_hand, 0.1)
-    this.addPart(textures, 'right_forearm', [-0.7, -1], 0.1)
-    this.addPart(textures, 'right_upper_arm', [-0.6, -1.5], 0.1)
-    this.addPart(textures, 'right_foot', this.extremeties.right_foot, 0.1)
-    this.addPart(textures, 'right_shin', [-0.3, 0.7], 0.1)
-    this.addPart(textures, 'right_upper_leg', [-0.3, 0.2], 0.1)
+
+    this.addPart(textures, 'head', [0, -2.0], 1)
+    this.addPart(textures, 'torso', [0, -1.1], 1)
+    this.addJoint(this.parts['head'], this.parts['torso'], [0, 0.3], 0.2)
     this.addPart(textures, 'hips', [0, -0.4], 1)
-    this.addPart(textures, 'torso', [0, -1.3], 1)
-    this.addPart(textures, 'head', [0, -2.2], 1)
+    this.addJoint(this.parts['torso'], this.parts['hips'], [0, 0.5], 0.2)
+
+    this.addPart(textures, 'left_upper_arm', [-0.6, -1.3], 0.1)
+    this.addJoint(this.parts['torso'], this.parts['left_upper_arm'], [-0.6, -0.5])
+    this.addPart(textures, 'right_upper_arm', [0.6, -1.3], 0.1)
+    this.addJoint(this.parts['torso'], this.parts['right_upper_arm'], [0.6, -0.5])
+
+    this.addPart(textures, 'left_forearm', [-0.7, -0.8], 0.1)
+    this.addJoint(this.parts['left_upper_arm'], this.parts['left_forearm'], [0.0, 0.2])
+    this.addPart(textures, 'right_forearm', [0.7, -0.8], 0.1)
+    this.addJoint(this.parts['right_upper_arm'], this.parts['right_forearm'], [0.0, 0.2])
+
+    this.addPart(textures, 'left_hand', this.extremeties.left_hand[0], 0.1)
+    this.addJoint(this.parts['left_forearm'], this.parts['left_hand'], [0.0, 0.3])
+    this.addPart(textures, 'right_hand', this.extremeties.right_hand[0], 0.1)
+    this.addJoint(this.parts['right_forearm'], this.parts['right_hand'], [0.0, 0.3])
+
+    // this.addPart(textures, 'left_foot', this.extremeties.left_foot[0], 0.1)
+    // this.addPart(textures, 'left_shin', [0.3, 0.7], 0.1)
+    // this.addPart(textures, 'left_upper_leg', [0.3, 0.2], 0.1)
+    // this.addPart(textures, 'right_foot', this.extremeties.right_foot[0], 0.1)
+    // this.addPart(textures, 'right_shin', [-0.3, 0.7], 0.1)
+    // this.addPart(textures, 'right_upper_leg', [-0.3, 0.2], 0.1)
   }
 
   addPart (textures, name, offset, mass) {
@@ -193,14 +207,32 @@ class Ragdoll extends Entity {
     })
   }
 
+  addJoint (part1, part2, offset, bendness = 1.0) {
+    let joint = new p2.RevoluteConstraint(part1.body, part2.body, {
+      worldPivot: [part1.body.position[0] + offset[0], part1.body.position[1] + offset[1]],
+      collideConnected: false,
+      maxForce: 1000 * part1.body.mass
+    })
+    if (bendness < 1.0) {
+      joint.setLimits(-Math.PI * bendness, Math.PI * bendness)
+    }
+    this.joints.push(joint)
+  }
+
   relative (position) {
     return [this.position[0] + position[0], this.position[1] + position[1]]
   }
 
   updateExtremeties (offsets) {
     for (var part in offsets) {
-      let offset = [this.extremeties[part][0] + offsets[part][0], this.extremeties[part][1] + offsets[part][1]]
-      this.parts[part].body.position = this.relative(offset)
+      let sourcePart = this.parts[this.extremeties[part][1]]
+      if (sourcePart) {
+        let centre = sourcePart.body.position
+        if (this.parts[part]) {
+          let position = [centre[0] + offsets[part][0], centre[1] + offsets[part][1]]
+          this.parts[part].body.position = position
+        }
+      }
     }
   }
 
@@ -213,11 +245,17 @@ class Ragdoll extends Entity {
       this.parts.head.sprite.on('mousedown', () => { game.sounds.wilhelm.play() })
       this.parts.head.sprite.on('touchstart', () => { game.sounds.wilhelm.play() })
     }
+    for (var joint of this.joints) {
+      game.world.addConstraint(joint)
+    }
   }
 
   popGame (game) {
     for (var name in this.parts) {
       this.parts[name].popGame(game)
+    }
+    for (var joint of this.joints) {
+      game.world.removeConstraint(joint)
     }
   }
 
@@ -350,13 +388,13 @@ class Game {
     if ((joy = this.getJoystick(...this.rfootJoy))) {
       offset.right_foot = joy
     }
-    this.entities.dave.updateExtremeties(offset)
-    this.entities.jack.updateExtremeties(offset)
+    // this.entities.dave.updateExtremeties(offset)
+    // this.entities.jack.updateExtremeties(offset)
   }
 
   init () {
     this.world = new p2.World()
-    this.world.gravity[1] = 0
+    this.world.gravity[1] = 1
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
     window.game = this
     this.viewport = new PIXI.Container()
@@ -369,7 +407,7 @@ class Game {
     this.viewport.position.x = this.game.renderer.width / 2 + this.camera.x
     this.viewport.position.y = this.game.renderer.height / 2 + this.camera.y
     let ratio = this.canvas.scrollWidth / this.canvas.scrollHeight
-    // this.camera.z = 50
+    this.camera.z = 100
     this.viewport.scale.x = this.camera.z
     this.viewport.scale.y = this.camera.z
     if (ratio < 1.6) this.viewport.scale.y *= (ratio / 1.6)
@@ -455,7 +493,7 @@ class Game {
   createDivider () {
     this.divider = new PIXI.Graphics()
     this.divider.position.x = 0
-    this.divider.position.y = -1
+    this.divider.position.y = 1
     this.divider.clear()
     this.divider.lineStyle(0.1, 0xffff00)
 
