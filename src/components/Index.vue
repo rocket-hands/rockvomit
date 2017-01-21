@@ -13,6 +13,7 @@
 
 <script>
   import Game from 'game.js'
+
   import { Loading, Dialog } from 'quasar'
   let game = null
   export default {

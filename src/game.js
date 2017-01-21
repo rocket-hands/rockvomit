@@ -2,6 +2,7 @@
 import 'pixi.js'
 import p2 from 'p2'
 import { Howl } from 'howler'
+import { scanGamepads, getGamepads } from 'gamepad'
 
 const FPS = 60
 
@@ -53,6 +54,10 @@ class Game {
       y: 0,
       z: 100
     }
+    this.lastGamepadCheck = 0.0
+    this.gamepads = getGamepads()
+    this.scanGamepads = scanGamepads
+    this.getGamepads = getGamepads
   }
 
   boot () {
@@ -78,6 +83,7 @@ class Game {
     }
     this.viewport.destroy()
     this.game.destroy()
+    window.game = undefined
   }
 
   update (dt) {
@@ -93,6 +99,7 @@ class Game {
 
   init () {
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
+    window.game = this
 
     this.viewport = new PIXI.Container()
     this.game.stage.addChild(this.viewport)
@@ -155,6 +162,10 @@ class Game {
   }
 
   loop (ms = 0.0) {
+    if (this.gametime > this.lastGamepadCheck + 500) {
+      scanGamepads()
+      this.lastGamepadCheck = this.gametime
+    }
     if (this.state !== 'running') {
       return
     }
