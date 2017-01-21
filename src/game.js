@@ -82,6 +82,12 @@ class Entity {
           shape.collisionMask = mask
           this.body.addShape(shape)
           break
+        case 'circle':
+          shape = new p2.Circle()
+          shape.collisionGroup = 0
+          shape.collisionMask = 0
+          this.body.addShape(shape)
+          break
         case 'box':
         default:
           shape = new p2.Box({
@@ -202,13 +208,25 @@ class Ragdoll extends Entity {
 
     this.parts.head.body.gravityScale = -10
     this.parts.torso.body.gravityScale = -5
+
+    this.parts.left_stick = new Entity(null, 1, {
+      type: 'circle',
+      mass: 0.1,
+      position: this.extremeties.left_hand
+    })
+    this.parts.right_stick = new Entity(null, 1, {
+      type: 'circle',
+      mass: 0.1,
+      position: this.extremeties.left_hand
+    })
+    this.addJoint('left_hand', 'left_stick')
+    this.addJoint('right_hand', 'right_stick')
   }
 
   addPart (textures, name, offset, mass) {
     this.parts[name] = new Entity(textures[`${this.name}_${name}`], this.scale, {
       mass: mass,
       position: this.relative(offset),
-      angularVelocity: 0,
       group: this.name
     })
   }
@@ -369,15 +387,15 @@ class Game {
 
   updateHands () {
     let offset = {
-      left_hand: [0, 0],
-      right_hand: [0, 0]
+      left_stick: [0, 0],
+      right_stick: [0, 0]
     }
     var joy
     if ((joy = this.getJoystick(...this.lhandJoy))) {
-      offset.left_hand = joy
+      offset.left_stick = joy
     }
     if ((joy = this.getJoystick(...this.rhandJoy))) {
-      offset.right_hand = joy
+      offset.right_stick = joy
     }
     this.entities.dave.updateExtremeties(offset)
     this.entities.jack.updateExtremeties(offset)
