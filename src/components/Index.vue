@@ -2,7 +2,7 @@
   <q-layout>
     <div slot="header" class="toolbar">
       <q-toolbar-title :padding="1">
-        Waveform {{score}}
+        Waveform Hero | Score: {{score}}
       </q-toolbar-title>
     </div>
     <div class="layout-view">

@@ -1,11 +1,11 @@
 let controllers = {}
 
-let addGamepad = (e) => {
-  controllers[e.gamepad.index] = e.gamepad
+let addGamepad = (gamepad) => {
+  controllers[gamepad.index] = gamepad
 }
 
-let removeGamepad = (e) => {
-  delete controllers[e.gamepad.index]
+let removeGamepad = (gamepad) => {
+  delete controllers[gamepad.index]
 }
 
 let scanGamepads = () => {
@@ -25,7 +25,7 @@ let getGamepads = () => {
   return controllers
 }
 
-window.addEventListener('gamepadconnected', addGamepad)
-window.addEventListener('gamepaddisconnected', removeGamepad)
+window.addEventListener('gamepadconnected', (e) => { addGamepad(e.gamepad) })
+window.addEventListener('gamepaddisconnected', (e) => { removeGamepad(e.gamepad) })
 
 export { scanGamepads, getGamepads }
