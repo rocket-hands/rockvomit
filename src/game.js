@@ -200,13 +200,13 @@ class Ragdoll extends Entity {
     this.addJoint('torso', 'right_upper_arm', [-0.47, -1.68], 1)
     this.addJoint('right_upper_arm', 'right_forearm', [-0.54, -1.15], 0.4)
     this.addJoint('right_forearm', 'right_hand', [-0.46, -0.62], 0.2)
-    this.addJoint('torso', 'hips', [0.05, -0.72], 0.1)
-    this.addJoint('hips', 'left_upper_leg', [0.30, -0.42], 0.1)
-    this.addJoint('left_upper_leg', 'left_shin', [0.30, 0.02], 0.1)
-    this.addJoint('left_shin', 'left_foot', [0.30, 0.49], 0.1)
-    this.addJoint('hips', 'right_upper_leg', [-0.17, -0.43], 0.1)
-    this.addJoint('right_upper_leg', 'right_shin', [-0.16, 0.05], 0.1)
-    this.addJoint('right_shin', 'right_foot', [-0.15, 0.49], 0.1)
+    this.addJoint('torso', 'hips', [0.05, -0.72], 0.04)
+    this.addJoint('hips', 'left_upper_leg', [0.30, -0.42], 0.2)
+    this.addJoint('left_upper_leg', 'left_shin', [0.30, 0.02], 0.5)
+    this.addJoint('left_shin', 'left_foot', [0.30, 0.49], 0.3)
+    this.addJoint('hips', 'right_upper_leg', [-0.17, -0.43], 0.2)
+    this.addJoint('right_upper_leg', 'right_shin', [-0.16, 0.05], 0.5)
+    this.addJoint('right_shin', 'right_foot', [-0.15, 0.49], 0.3)
 
     this.parts.head.body.gravityScale = -10
     this.parts.torso.body.gravityScale = -5
