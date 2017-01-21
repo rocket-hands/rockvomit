@@ -14,30 +14,34 @@ const SOUNDS = [
 const TEXTURES = [
   'dave_head',
   'dave_hips',
+  'dave_torso',
   'dave_left_forearm',
+  'dave_left_foot',
   'dave_left_hand',
   'dave_left_shin',
   'dave_left_upper_arm',
   'dave_left_upper_leg',
   'dave_right_forearm',
   'dave_right_hand',
+  'dave_right_foot',
   'dave_right_shin',
   'dave_right_upper_arm',
   'dave_right_upper_leg',
-  'dave_torso',
   'jack_head',
   'jack_hips',
+  'jack_torso',
   'jack_left_forearm',
   'jack_left_hand',
+  'jack_left_foot',
   'jack_left_shin',
   'jack_left_upper_arm',
   'jack_left_upper_leg',
   'jack_right_forearm',
   'jack_right_hand',
+  'jack_right_foot',
   'jack_right_shin',
   'jack_right_upper_arm',
   'jack_right_upper_leg',
-  'jack_torso',
   'labs',
   'stage'
 ]
@@ -139,14 +143,22 @@ class Ragdoll extends Entity {
     this.position = position
     this.scale = scale
     this.parts = {}
-    this.addPart(textures, 'left_hand', [0.65, -0.6], 0.1)
+    this.extremeties = {
+      left_hand: [0.65, -0.6],
+      right_hand: [0.3, 1.1],
+      left_foot: [-0.65, -0.6],
+      right_foot: [-0.3, 1.1]
+    }
+    this.addPart(textures, 'left_hand', this.extremeties.left_hand, 0.1)
     this.addPart(textures, 'left_forearm', [0.7, -1], 0.1)
     this.addPart(textures, 'left_upper_arm', [0.6, -1.5], 0.1)
+    this.addPart(textures, 'left_foot', this.extremeties.left_foot, 0.1)
     this.addPart(textures, 'left_shin', [0.3, 0.7], 0.1)
     this.addPart(textures, 'left_upper_leg', [0.3, 0.2], 0.1)
-    this.addPart(textures, 'right_hand', [-0.65, -0.6], 0.1)
+    this.addPart(textures, 'right_hand', this.extremeties.right_hand, 0.1)
     this.addPart(textures, 'right_forearm', [-0.7, -1], 0.1)
     this.addPart(textures, 'right_upper_arm', [-0.6, -1.5], 0.1)
+    this.addPart(textures, 'right_foot', this.extremeties.right_foot, 0.1)
     this.addPart(textures, 'right_shin', [-0.3, 0.7], 0.1)
     this.addPart(textures, 'right_upper_leg', [-0.3, 0.2], 0.1)
     this.addPart(textures, 'hips', [0, -0.4], 1)
@@ -157,9 +169,21 @@ class Ragdoll extends Entity {
   addPart (textures, name, offset, mass) {
     this.parts[name] = new Entity(textures[`${this.name}_${name}`], this.scale, {
       mass: mass,
-      position: [this.position[0] + offset[0], this.position[1] + offset[1]],
-      angularVelocity: 0
+      position: this.relative(offset),
+      angularVelocity: 0,
+      gravityScale: 0
     })
+  }
+
+  relative (position) {
+    return [this.position[0] + position[0], this.position[1] + position[1]]
+  }
+
+  updateExtremeties (offsets) {
+    for (var part in offsets) {
+      let offset = [this.extremeties[part][0] + offsets[part][0], this.extremeties[part][1] + offsets[part][1]]
+      this.parts[part].body.position = this.relative(offset)
+    }
   }
 
   pushGame (game) {
@@ -289,37 +313,32 @@ class Game {
   }
 
   updateHands () {
-    let lhand = [-0.5, 0]
-    let rhand = [0.5, 0]
-    let lfoot = [-0.5, -2]
-    let rfoot = [0.5, -2]
+    let offset = {
+      left_hand: [0, 0],
+      right_hand: [0, 0],
+      left_foot: [0, 0],
+      right_foot: [0, 0]
+    }
     var joy
     if ((joy = this.getJoystick(...this.lhandJoy))) {
-      lhand[0] += joy[0]
-      lhand[1] += -joy[1]
+      offset.left_hand = joy
     }
     if ((joy = this.getJoystick(...this.rhandJoy))) {
-      rhand[0] += joy[0]
-      rhand[1] += -joy[1]
+      offset.right_hand = joy
     }
     if ((joy = this.getJoystick(...this.lfootJoy))) {
-      lfoot[0] += joy[0]
-      lfoot[1] += -joy[1]
+      offset.left_foot = joy
     }
     if ((joy = this.getJoystick(...this.rfootJoy))) {
-      rfoot[0] += joy[0]
-      rfoot[1] += -joy[1]
+      offset.right_foot = joy
     }
-
-    this.entities.lhand.body.position = lhand
-    this.entities.rhand.body.position = rhand
-    this.entities.lfoot.body.position = lfoot
-    this.entities.rfoot.body.position = rfoot
+    this.entities.dave.updateExtremeties(offset)
+    this.entities.jack.updateExtremeties(offset)
   }
 
   init () {
     this.world = new p2.World()
-    this.world.gravity[1] *= -0.2
+    this.world.gravity[1] *= 0
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
     window.game = this
     this.viewport = new PIXI.Container()
@@ -375,10 +394,10 @@ class Game {
   spawn () {
     this.addEntity('stage', this.textures.stage, 0.01)
 
-    this.entities['jack'] = new Ragdoll('jack', [-1.2, 1.4], 0.004, this.textures)
+    this.entities['jack'] = new Ragdoll('jack', [-1.2, 1.0], 0.004, this.textures)
     this.entities['jack'].pushGame(this)
 
-    this.entities['dave'] = new Ragdoll('dave', [1.2, 1.4], 0.002, this.textures)
+    this.entities['dave'] = new Ragdoll('dave', [1.2, 1.0], 0.002, this.textures)
     this.entities['dave'].pushGame(this)
 
     this.addEntity('ground', null, null, { type: 'plane', position: [0, 2.3], angle: Math.PI })
