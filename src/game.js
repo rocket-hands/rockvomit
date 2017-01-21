@@ -43,30 +43,52 @@ const TEXTURES = [
 ]
 
 class Entity {
-  constructor (texture, size, physics) {
+  constructor (texture, scale, physics) {
     this.sprite = null
     this.body = null
     if (texture) {
       this.sprite = new PIXI.Sprite(texture)
       this.sprite.anchor.x = 0.5
       this.sprite.anchor.y = 0.5
-      if (size) {
-        this.sprite.scale.x = size.scale
-        this.sprite.scale.y = size.scale
+      if (scale) {
+        this.sprite.scale.x = scale
+        this.sprite.scale.y = scale
       }
     }
     if (physics) {
+      let type = physics.type
+      delete (physics.type)
       this.body = new p2.Body(physics)
-      if (size) {
-        switch (size.type) {
+      switch (type) {
           case 'plane':
             this.body.addShape(new p2.Plane())
             break
           case 'box':
           default:
-            this.body.addShape(new p2.Box(size))
-        }
+          this.body.addShape(new p2.Box({
+            width: this.sprite.width,
+            height: this.sprite.height
+          }))
       }
+    }
+  }
+
+  pushGame (game) {
+    if (game.viewport && this.sprite) {
+      game.viewport.addChild(this.sprite)
+    }
+    if (game.world && this.body) {
+      game.world.addBody(this.body)
+    }
+        }
+
+  popGame (game) {
+    if (game.world && this.body) {
+      game.world.removeBody(this.body)
+      }
+    if (game.viewport && this.sprite) {
+      game.viewport.removeChild(this.sprite)
+      this.sprite.destroy(true, true)
     }
   }
 
@@ -86,7 +108,6 @@ class Entity {
         for (var shape of this.body.shapes) {
           switch (shape.constructor.name) {
             case 'Box':
-              window.foo = shape.vertices
               this.debugSprite.moveTo(...shape.vertices[0])
               for (var vertex of shape.vertices) {
                 this.debugSprite.lineTo(...vertex)
@@ -111,6 +132,19 @@ class Entity {
   }
 }
 
+/*
+class Ragdoll extends Entity {
+  constructor(game, position) {
+    this.parts = {}
+  }
+
+  def update (dt) {
+  }
+
+  def debug (viewport, show)
+}
+*/
+
 class Game {
   constructor (elementId, data) {
     this.state = 'waiting'
@@ -130,10 +164,10 @@ class Game {
     this.entities = {}
   }
 
-  boot () {
+  boot (callback) {
     this.state = 'booting'
     this.init()
-    this.load()
+    this.load(callback)
   }
 
   run () {
@@ -255,61 +289,49 @@ class Game {
     if (ratio > 1.6) this.viewport.scale.y *= (ratio / 1.6)
   }
 
-  load () {
+  load (callback) {
     this.sounds = {}
     for (var sound of SOUNDS) {
       this.sounds[sound] = new Howl({
         src: [require(`assets/${sound}.webm`), require(`assets/${sound}.mp3`)]
       })
     }
+    for (var texture of TEXTURES) {
+      PIXI.loader.add(texture, require(`assets/${texture}.png`))
+    }
+    PIXI.loader.once('complete', () => {
     this.textures = {}
     for (var texture of TEXTURES) {
-      this.textures[texture] = PIXI.Texture.fromImage(require(`assets/${texture}.png`))
+        this.textures[texture] = PIXI.loader.resources[texture].texture
     }
+      callback()
+    })
+    PIXI.loader.load()
   }
 
-  addEntity (name, texture = null, size = null, physics = null) {
-    this.entities[name] = new Entity(texture, size, physics)
-    if (this.entities[name].sprite) {
-      this.viewport.addChild(this.entities[name].sprite)
-    }
-    if (this.entities[name].body) {
-      this.world.addBody(this.entities[name].body)
-    }
+  addEntity (name, texture = null, scale = 1.0, physics = null) {
+    this.entities[name] = new Entity(texture, scale, physics)
+    this.entities[name].pushGame(this)
     return this.entities[name]
   }
 
   removeEntity (name) {
-    if (this.entities[name].body) {
-      this.world.removeBody(this.entities[name].body)
-    }
-    if (this.entities[name].sprite) {
-      this.viewport.removeChild(this.entities[name].sprite)
-    }
+    this.entities[name].popGame(this)
     delete (this.entities[name])
   }
 
   spawn () {
-    this.addEntity('stage', this.textures.stage, { scale: 0.01 })
-    this.addEntity('lhand', this.textures.dave_left_hand, {
-      scale: 0.002,
-      width: 0.3,
-      height: 0.3
-    }, {
+    this.addEntity('stage', this.textures.stage, 0.01)
+
+    this.addEntity('lhand', this.textures.dave_left_hand, 0.002, {
       mass: 0.1,
-      position: [0, 2.5],
-      angularVelocity: 0,
-      gravityScale: 0
+      position: [-1, 2.0],
+      angularVelocity: 0
     })
-    this.addEntity('rhand', this.textures.dave_right_hand, {
-      scale: 0.002,
-      width: 0.3,
-      height: 0.3
-    }, {
+    this.addEntity('rhand', this.textures.dave_right_hand, 0.002, {
       mass: 0.1,
-      position: [0, 2.5],
-      angularVelocity: 0,
-      gravityScale: 0
+      position: [1, 2.5],
+      angularVelocity: 0
     })
     this.addEntity('lfoot', this.textures.dave_left_hand, {
       scale: 0.002,
@@ -331,19 +353,16 @@ class Game {
       angularVelocity: 0,
       gravityScale: 0
     })
-    this.addEntity('head', this.textures.dave_head, {
-      scale: 0.002,
-      width: 0.5,
-      height: 0.5
-    }, {
+    this.addEntity('head', this.textures.dave_head, 0.002, {
       mass: 1,
       position: [0, 2.5],
       angularVelocity: 1
     })
+
     this.entities.head.sprite.interactive = true
     this.entities.head.sprite.on('mousedown', () => { this.sounds.wilhelm.play() })
     this.entities.head.sprite.on('touchstart', () => { this.sounds.wilhelm.play() })
-    this.addEntity('ground', null, { type: 'plane' }, { position: [0, -2.5] })
+    this.addEntity('ground', null, null, { type: 'plane', position: [0, -2.5] })
     if (this.data.music) {
       this.sounds.music.play()
     }
