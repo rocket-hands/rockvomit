@@ -168,16 +168,17 @@ class Ragdoll extends Entity {
       left_foot: [0.28, 0.6],
       right_foot: [-0.1, 0.6]
     }
+
     this.addPart(textures, 'left_hand', this.extremeties.left_hand, 0.1)
     this.addPart(textures, 'left_forearm', [0.6, -1], 0.1)
     this.addPart(textures, 'left_upper_arm', [0.5, -1.55], 0.1)
-    this.addPart(textures, 'left_foot', this.extremeties.left_foot, 0.1)
+    this.addPart(textures, 'left_foot', this.extremeties.left_foot, 1)
     this.addPart(textures, 'left_shin', [0.3, 0.25], 0.1)
     this.addPart(textures, 'left_upper_leg', [0.3, -0.2], 0.1)
     this.addPart(textures, 'right_hand', this.extremeties.right_hand, 0.1)
     this.addPart(textures, 'right_forearm', [-0.52, -0.9], 0.1)
     this.addPart(textures, 'right_upper_arm', [-0.5, -1.45], 0.1)
-    this.addPart(textures, 'right_foot', this.extremeties.right_foot, 0.1)
+    this.addPart(textures, 'right_foot', this.extremeties.right_foot, 1)
     this.addPart(textures, 'right_shin', [-0.15, 0.25], 0.1)
     this.addPart(textures, 'right_upper_leg', [-0.17, -0.2], 0.1)
     this.addPart(textures, 'hips', [0.05, -0.7], 0.1)
@@ -198,6 +199,9 @@ class Ragdoll extends Entity {
     this.addJoint('hips', 'right_upper_leg')
     this.addJoint('right_upper_leg', 'right_shin')
     this.addJoint('right_shin', 'right_foot')
+
+    this.parts.head.body.gravityScale = -10
+    this.parts.torso.body.gravityScale = -5
   }
 
   addPart (textures, name, offset, mass) {
@@ -213,7 +217,7 @@ class Ragdoll extends Entity {
     let bodyA = this.parts[partA].body
     let bodyB = this.parts[partB].body
     let pivot = [(bodyA.position[0] + bodyB.position[0]) / 2, (bodyA.position[1] + bodyB.position[1]) / 2]
-    let joint = new p2.RevoluteConstraint(bodyA, bodyB, { worldPivot: pivot, maxForce: 1000000 })
+    let joint = new p2.RevoluteConstraint(bodyA, bodyB, { worldPivot: pivot, maxForce: 100 })
     joint.setLimits(-Math.PI / 8, Math.PI / 8)
     this.joints.push(joint)
   }
@@ -224,8 +228,8 @@ class Ragdoll extends Entity {
 
   updateExtremeties (offsets) {
     for (var part in offsets) {
-      this.parts[part].body.position[0] += offsets[part][0] * 0.1
-      this.parts[part].body.position[1] += offsets[part][1] * 0.1
+      this.parts[part].body.position[0] += offsets[part][0] * 0.2
+      this.parts[part].body.position[1] += offsets[part][1] * 0.2
       this.parts['head'].body.position[0] += offsets[part][0] * 0.01
       this.parts['head'].body.position[1] += offsets[part][1] * 0.01
     }
@@ -351,8 +355,8 @@ class Game {
   }
 
   setJoys () {
-    this.lhandJoy = ['0', 0, 1]
-    this.rhandJoy = ['0', 2, 3]
+    this.lhandJoy = ['0', 2, 3]
+    this.rhandJoy = ['0', 0, 1]
     this.lfootJoy = ['0', 0, 1]
     this.rfootJoy = ['0', 2, 3]
   }
@@ -379,19 +383,21 @@ class Game {
     if ((joy = this.getJoystick(...this.rhandJoy))) {
       offset.right_hand = joy
     }
+    /*
     if ((joy = this.getJoystick(...this.lfootJoy))) {
       offset.left_foot = joy
     }
     if ((joy = this.getJoystick(...this.rfootJoy))) {
       offset.right_foot = joy
     }
+    */
     this.entities.dave.updateExtremeties(offset)
     this.entities.jack.updateExtremeties(offset)
   }
 
   init () {
     this.world = new p2.World()
-    this.world.gravity[1] *= -0.1
+    this.world.gravity[1] *= -1
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
     window.game = this
     this.viewport = new PIXI.Container()

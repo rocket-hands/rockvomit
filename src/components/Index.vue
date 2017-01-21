@@ -26,8 +26,8 @@
     data () {
       return {
         score: 0,
-        debug: DEV,
-        music: PROD,
+        debug: false,
+        music: true,
         message: ''
       }
     },
