@@ -14,33 +14,45 @@ const SOUNDS = [
 const TEXTURES = [
   'dave_head',
   'dave_hips',
+  'dave_torso',
   'dave_left_forearm',
+  'dave_left_foot',
   'dave_left_hand',
   'dave_left_shin',
   'dave_left_upper_arm',
   'dave_left_upper_leg',
   'dave_right_forearm',
   'dave_right_hand',
+  'dave_right_foot',
   'dave_right_shin',
   'dave_right_upper_arm',
   'dave_right_upper_leg',
-  'dave_torso',
   'jack_head',
   'jack_hips',
+  'jack_torso',
   'jack_left_forearm',
   'jack_left_hand',
+  'jack_left_foot',
   'jack_left_shin',
   'jack_left_upper_arm',
   'jack_left_upper_leg',
   'jack_right_forearm',
   'jack_right_hand',
+  'jack_right_foot',
   'jack_right_shin',
   'jack_right_upper_arm',
   'jack_right_upper_leg',
-  'jack_torso',
   'labs',
   'stage'
 ]
+
+const COLLISION_GROUPS = {
+  ground: 0b0001,
+  jack: 0b0010,
+  dave: 0b0100,
+  other: 0b1000,
+  all: 0b1111
+}
 
 class Entity {
   constructor (texture, scale, physics) {
@@ -57,18 +69,34 @@ class Entity {
     }
     if (physics) {
       let type = physics.type
+      let group = COLLISION_GROUPS[physics.group] || COLLISION_GROUPS.other
+      let mask = COLLISION_GROUPS.all ^ group
+      let shape = null
       delete (physics.type)
+      delete (physics.group)
       this.body = new p2.Body(physics)
       switch (type) {
         case 'plane':
-          this.body.addShape(new p2.Plane())
+          shape = new p2.Plane()
+          shape.collisionGroup = group
+          shape.collisionMask = mask
+          this.body.addShape(shape)
+          break
+        case 'circle':
+          shape = new p2.Circle()
+          shape.collisionGroup = 0
+          shape.collisionMask = 0
+          this.body.addShape(shape)
           break
         case 'box':
         default:
-          this.body.addShape(new p2.Box({
-            width: this.sprite.width * 0.7,
-            height: this.sprite.height * 0.7
-          }))
+          shape = new p2.Box({
+            width: this.sprite.width * 0.9,
+            height: this.sprite.height * 0.9
+          })
+          shape.collisionGroup = group
+          shape.collisionMask = mask
+          this.body.addShape(shape)
       }
     }
   }
@@ -113,7 +141,7 @@ class Entity {
                 this.debugSprite.lineTo(...vertex)
               }
               break
-            case 'Plane':
+            case 'Circle':
               this.debugSprite.drawCircle(...shape.position, 0.05)
               break
           }
@@ -139,32 +167,100 @@ class Ragdoll extends Entity {
     this.position = position
     this.scale = scale
     this.parts = {}
-    this.addPart(textures, 'left_hand', [0.65, -0.6], 0.1)
-    this.addPart(textures, 'left_forearm', [0.7, -1], 0.1)
-    this.addPart(textures, 'left_upper_arm', [0.6, -1.5], 0.1)
-    this.addPart(textures, 'left_shin', [0.3, 0.7], 0.1)
-    this.addPart(textures, 'left_upper_leg', [0.3, 0.2], 0.1)
-    this.addPart(textures, 'right_hand', [-0.65, -0.6], 0.1)
-    this.addPart(textures, 'right_forearm', [-0.7, -1], 0.1)
-    this.addPart(textures, 'right_upper_arm', [-0.6, -1.5], 0.1)
-    this.addPart(textures, 'right_shin', [-0.3, 0.7], 0.1)
-    this.addPart(textures, 'right_upper_leg', [-0.3, 0.2], 0.1)
-    this.addPart(textures, 'hips', [0, -0.4], 1)
-    this.addPart(textures, 'torso', [0, -1.3], 1)
-    this.addPart(textures, 'head', [0, -2.2], 1)
+    this.joints = []
+    this.extremeties = {
+      left_hand: [0.55, -0.6],
+      right_hand: [-0.42, -0.6],
+      left_foot: [0.28, 0.6],
+      right_foot: [-0.1, 0.6],
+      left_stick: [-0.5, -2],
+      right_stick: [0.5, -2]
+    }
+
+    this.addPart(textures, 'left_foot', this.extremeties.left_foot, 1)
+    this.addPart(textures, 'left_shin', [0.3, 0.25], 0.1)
+    this.addPart(textures, 'left_upper_leg', [0.3, -0.2], 0.1)
+    this.addPart(textures, 'right_foot', this.extremeties.right_foot, 1)
+    this.addPart(textures, 'right_shin', [-0.15, 0.25], 0.1)
+    this.addPart(textures, 'right_upper_leg', [-0.17, -0.2], 0.1)
+    this.addPart(textures, 'hips', [0.05, -0.6], 0.1)
+    this.addPart(textures, 'torso', [0, -1.3], 0.1)
+    this.addPart(textures, 'head', [0, -2.15], 0.1)
+    this.addPart(textures, 'left_hand', this.extremeties.left_hand, 0.1)
+    this.addPart(textures, 'left_forearm', [0.6, -1], 0.1)
+    this.addPart(textures, 'left_upper_arm', [0.5, -1.55], 0.1)
+    this.addPart(textures, 'right_hand', this.extremeties.right_hand, 0.1)
+    this.addPart(textures, 'right_forearm', [-0.52, -0.9], 0.1)
+    this.addPart(textures, 'right_upper_arm', [-0.5, -1.45], 0.1)
+
+    this.addJoint('head', 'torso', [0, -1.86], 0.25)
+    this.addJoint('torso', 'left_upper_arm', [0.4, -1.75], 1)
+    this.addJoint('left_upper_arm', 'left_forearm', [0.61, -1.25], 0.4)
+    this.addJoint('left_forearm', 'left_hand', [0.57, -0.74], 0.2)
+    this.addJoint('torso', 'right_upper_arm', [-0.47, -1.68], 1)
+    this.addJoint('right_upper_arm', 'right_forearm', [-0.54, -1.15], 0.4)
+    this.addJoint('right_forearm', 'right_hand', [-0.46, -0.62], 0.2)
+    this.addJoint('torso', 'hips', [0.05, -0.72], 0.04)
+    this.addJoint('hips', 'left_upper_leg', [0.30, -0.42], 0.2)
+    this.addJoint('left_upper_leg', 'left_shin', [0.30, 0.02], 0.5)
+    this.addJoint('left_shin', 'left_foot', [0.30, 0.49], 0.3)
+    this.addJoint('hips', 'right_upper_leg', [-0.17, -0.43], 0.2)
+    this.addJoint('right_upper_leg', 'right_shin', [-0.16, 0.05], 0.5)
+    this.addJoint('right_shin', 'right_foot', [-0.15, 0.49], 0.3)
+
+    this.parts.head.body.gravityScale = -10
+    this.parts.torso.body.gravityScale = -5
+
+    this.parts.left_stick = new Entity(null, 1, {
+      type: 'circle',
+      mass: 0,
+      position: this.relative(this.extremeties.left_stick)
+    })
+    this.parts.right_stick = new Entity(null, 1, {
+      type: 'circle',
+      mass: 0,
+      position: this.relative(this.extremeties.right_stick)
+    })
+
+    // because backwards everything...
+    this.addJoint('right_hand', 'left_stick', this.extremeties.right_hand, 2, 4)
+    this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, 2, 4)
   }
 
   addPart (textures, name, offset, mass) {
     this.parts[name] = new Entity(textures[`${this.name}_${name}`], this.scale, {
       mass: mass,
-      position: [this.position[0] + offset[0], this.position[1] + offset[1]],
-      angularVelocity: 0
+      position: this.relative(offset),
+      group: this.name
     })
+  }
+
+  addJoint (partA, partB, pivot, limit, force = 100) {
+    let bodyA = this.parts[partA].body
+    let bodyB = this.parts[partB].body
+    let joint = new p2.RevoluteConstraint(bodyA, bodyB, { worldPivot: this.relative(pivot), maxForce: force })
+    joint.setLimits(-Math.PI * limit, Math.PI * limit)
+    this.joints.push(joint)
+  }
+
+  relative (position) {
+    return [this.position[0] + position[0], this.position[1] + position[1]]
+  }
+
+  updateExtremeties (offsets) {
+    for (var part in offsets) {
+      this.parts[part].body.position = this.relative(this.extremeties[part])
+      this.parts[part].body.position[0] += offsets[part][0] * 2
+      this.parts[part].body.position[1] += offsets[part][1] * 2
+    }
   }
 
   pushGame (game) {
     for (var name in this.parts) {
       this.parts[name].pushGame(game)
+    }
+    for (var joint of this.joints) {
+      game.world.addConstraint(joint)
     }
     if (this.parts.head) {
       this.parts.head.sprite.interactive = true
@@ -176,6 +272,9 @@ class Ragdoll extends Entity {
   popGame (game) {
     for (var name in this.parts) {
       this.parts[name].popGame(game)
+    }
+    for (var joint of this.joints) {
+      game.world.removeConstraint(joint)
     }
   }
 
@@ -190,6 +289,44 @@ class Ragdoll extends Entity {
       this.parts[name].debug(viewport, show)
     }
   }
+}
+
+class Spinner {
+  constructor (position, color, beat = 4, offset = 0, spinSpeed = 10, initialAngle = 0, width = 10, blur = 10) {
+    beat = beat * 7 / 4
+    this.blur = blur
+    this.beat = beat
+    this.offset = offset
+    this.spinSpeed = spinSpeed
+    this.gfx = new PIXI.Graphics()
+    this.gfx.position.x = position[0]
+    this.gfx.position.y = position[1]
+    this.gfx.clear()
+    this.gfx.lineStyle(width / 100, color)
+    this.gfx.moveTo(0.0, -6)
+    this.gfx.lineTo(0.0, 6)
+    var blurFilter = new PIXI.filters.BlurFilter()
+    blurFilter.blur = 10
+    this.gfx.filters = [blurFilter]
+    this.gfx.blendMode = PIXI.BLEND_MODES.SCREEN
+    this.gfx.transform.rotation = initialAngle
+  }
+
+  pushGame (game) {
+    game.viewport.addChild(this.gfx)
+  }
+
+  popGame (game) {
+    game.viewport.removeChild(this.gfx)
+  }
+
+  update (game) {
+    let time = (game.gametime + this.offset)
+    this.gfx.transform.rotation = time / this.spinSpeed
+    let amp = Math.sin(time * this.beat)
+    this.gfx.filters[0].blur = amp * this.blur + this.blur * 2
+  }
+
 }
 
 class Game {
@@ -209,6 +346,7 @@ class Game {
     this.getGamepads = getGamepads
     this.debugLayer = null
     this.entities = {}
+    this.effects = []
   }
 
   boot (callback) {
@@ -221,6 +359,7 @@ class Game {
     this.state = 'running'
     this.resize()
     this.spawn()
+    this.addEffects()
     this.loop()
   }
 
@@ -236,6 +375,7 @@ class Game {
       this.textures[texture].destroy(true)
     }
     PIXI.loader.reset()
+    this.removeEffects()
     this.viewport.destroy()
     this.game.destroy()
     this.world.clear()
@@ -243,7 +383,28 @@ class Game {
     window.game = undefined
   }
 
+  checkReady () {
+    // check any gamepads that aren't in playersReady
+    for (var id of Object.keys(this.gamepads)) {
+      if (!(id in this.playersReady)) {
+        if (this.gamepads[id].buttons.find((button) => { return button.pressed })) {
+          this.playersReady.push(id)
+        }
+      }
+    }
+    if (this.playersReady.length === 0) {
+      this.data.message = 'Hey you two!!! Push a button!'
+    } else if (this.playersReady.length === 1) {
+      this.data.message = 'Press that button player 2!!'
+    } else if (this.playersReady.length === 2) {
+      this.data.message = "Let's do this!"
+    }
+  }
+
   update (dt) {
+    if (this.playersReady.length < 2) {
+      this.checkReady()
+    }
     this.updateHands()
     this.world.step(dt)
     for (var name in this.entities) {
@@ -251,28 +412,53 @@ class Game {
     }
   }
 
-  updateHands () {
-    if (this.gamepads[0]) {
-      this.entities.lhand.body.position[0] = this.gamepads[0].axes[0] - 0.5
-      this.entities.lhand.body.position[1] = -this.gamepads[0].axes[1]
-      this.entities.rhand.body.position[0] = this.gamepads[0].axes[2] + 0.5
-      this.entities.rhand.body.position[1] = -this.gamepads[0].axes[3]
+  setJoys () {
+    this.lhandJoy = ['0', 0, 1]
+    this.rhandJoy = ['0', 2, 3]
+    this.lfootJoy = ['0', 0, 1]
+    this.rfootJoy = ['0', 2, 3]
+  }
+
+  getJoystick (player, axis1, axis2) {
+    if (this.gamepads[player]) {
+      return [this.gamepads[player].axes[axis1], this.gamepads[player].axes[axis2]]
+    } else {
+      return undefined
     }
+  }
+
+  updateHands () {
+    let offset = {
+      left_stick: [0, 0],
+      right_stick: [0, 0]
+    }
+    var joy
+    if ((joy = this.getJoystick(...this.lhandJoy))) {
+      offset.left_stick = joy
+    }
+    if ((joy = this.getJoystick(...this.rhandJoy))) {
+      offset.right_stick = joy
+    }
+    this.entities.dave.updateExtremeties(offset)
+    this.entities.jack.updateExtremeties(offset)
   }
 
   init () {
     this.world = new p2.World()
-    this.world.gravity[1] *= -0.2
+    this.world.gravity[1] *= -1
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
     window.game = this
     this.viewport = new PIXI.Container()
     this.game.stage.addChild(this.viewport)
+    this.playersReady = []
+    this.setJoys()
   }
 
   resize () {
     this.viewport.position.x = this.game.renderer.width / 2 + this.camera.x
     this.viewport.position.y = this.game.renderer.height / 2 + this.camera.y
     let ratio = this.canvas.scrollWidth / this.canvas.scrollHeight
+    // this.camera.z = 50
     this.viewport.scale.x = this.camera.z
     this.viewport.scale.y = this.camera.z
     if (ratio < 1.6) this.viewport.scale.y *= (ratio / 1.6)
@@ -315,15 +501,15 @@ class Game {
   spawn () {
     this.addEntity('stage', this.textures.stage, 0.01)
 
-    this.entities['jack'] = new Ragdoll('jack', [-1.2, 1.4], 0.004, this.textures)
+    this.entities['jack'] = new Ragdoll('jack', [-1.2, 1.5], 0.004, this.textures)
     this.entities['jack'].pushGame(this)
 
-    this.entities['dave'] = new Ragdoll('dave', [1.2, 1.4], 0.002, this.textures)
+    this.entities['dave'] = new Ragdoll('dave', [1.2, 1.5], 0.002, this.textures)
     this.entities['dave'].pushGame(this)
 
-    this.addEntity('ground', null, null, { type: 'plane', position: [0, 2.3], angle: Math.PI })
-    this.addEntity('right_wall', null, null, { type: 'plane', position: [4, 0], angle: Math.PI / 2 })
-    this.addEntity('left_wall', null, null, { type: 'plane', position: [-4, 0], angle: (3 * Math.PI) / 2 })
+    this.addEntity('ground', null, null, { type: 'plane', group: 'ground', position: [0, 2.3], angle: Math.PI })
+    this.addEntity('right_wall', null, null, { type: 'plane', group: 'ground', position: [4, 0], angle: Math.PI / 2 })
+    this.addEntity('left_wall', null, null, { type: 'plane', group: 'ground', position: [-4, 0], angle: (3 * Math.PI) / 2 })
 
     if (this.data.music) {
       this.sounds.music.play()
@@ -342,16 +528,43 @@ class Game {
     if (ms < 2000) {
       this.gametime = ms / 1000
       this.viewport.visible = false
-    } else {
+    } else if (dt < 5) {
       this.viewport.visible = true
       while (dt > this.frequency) {
         dt -= this.frequency
         this.gametime += this.frequency
         this.update(this.frequency)
+        this.updateEffects(this.frequency)
       }
+    } else {
+      this.gametime = ms / 1000
     }
     this.debug()
     requestAnimationFrame(this.loop.bind(this))
+  }
+
+  removeEffects () {
+    for (var effect of this.effects) {
+      effect.popGame(this)
+      this.effects.pop(effect)
+    }
+  }
+
+  addEffects () {
+    this.addEffect(new Spinner([1, 0], 0xff00ff, 4, 0, 10, 0, 15, 15))
+    this.addEffect(new Spinner([2, 1], 0x00ff00, 8, 0, 2, 0, 8, 5))
+    this.addEffect(new Spinner([-2, 2], 0xff0000, 8, 0, 2.7, 10, 20, 15))
+  }
+
+  addEffect (effect) {
+    this.effects.push(effect)
+    effect.pushGame(this)
+  }
+
+  updateEffects (dt) {
+    for (var effect of this.effects) {
+      effect.update(this)
+    }
   }
 
   debug () {

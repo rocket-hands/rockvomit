@@ -9,6 +9,11 @@
     <div class="layout-view">
       <canvas id="viewport"></canvas>
     </div>
+    <div slot="footer" class="toolbar">
+      <q-toolbar-title :padding="1">
+        {{message}}
+      </q-toolbar-title>
+    </div>
   </q-layout>
 </template>
 
@@ -21,8 +26,9 @@
     data () {
       return {
         score: 0,
-        debug: DEV,
-        music: PROD
+        debug: false,
+        music: true,
+        message: ''
       }
     },
     methods: {
