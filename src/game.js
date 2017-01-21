@@ -173,10 +173,13 @@ class Ragdoll extends Entity {
       right_hand: [-0.42, -0.6],
       left_foot: [0.28, 0.6],
       right_foot: [-0.1, 0.6],
-      left_stick: [-1, -0.6],
-      right_stick: [1, -0.6]
+      left_stick: [-0.5, -2],
+      right_stick: [0.5, -2]
     }
 
+    this.addPart(textures, 'hips', [0.05, -0.7], 0.1)
+    this.addPart(textures, 'torso', [0, -1.3], 0.1)
+    this.addPart(textures, 'head', [0, -2.15], 0.1)
     this.addPart(textures, 'left_hand', this.extremeties.left_hand, 0.1)
     this.addPart(textures, 'left_forearm', [0.6, -1], 0.1)
     this.addPart(textures, 'left_upper_arm', [0.5, -1.55], 0.1)
@@ -189,17 +192,14 @@ class Ragdoll extends Entity {
     this.addPart(textures, 'right_foot', this.extremeties.right_foot, 1)
     this.addPart(textures, 'right_shin', [-0.15, 0.25], 0.1)
     this.addPart(textures, 'right_upper_leg', [-0.17, -0.2], 0.1)
-    this.addPart(textures, 'hips', [0.05, -0.7], 0.1)
-    this.addPart(textures, 'torso', [0, -1.3], 0.1)
-    this.addPart(textures, 'head', [0, -2.15], 0.1)
 
     this.addJoint('head', 'torso', [0, -1.86], 0.25)
-    this.addJoint('torso', 'left_upper_arm', [0.4, -1.75], 0.1)
-    this.addJoint('left_upper_arm', 'left_forearm', [0.61, -1.25], 0.1)
-    this.addJoint('left_forearm', 'left_hand', [0.57, -0.74], 0.1)
-    this.addJoint('torso', 'right_upper_arm', [-0.47, -1.68], 0.1)
-    this.addJoint('right_upper_arm', 'right_forearm', [-0.54, -1.15], 0.1)
-    this.addJoint('right_forearm', 'right_hand', [-0.46, -0.62], 0.1)
+    this.addJoint('torso', 'left_upper_arm', [0.4, -1.75], 1)
+    this.addJoint('left_upper_arm', 'left_forearm', [0.61, -1.25], 0.4)
+    this.addJoint('left_forearm', 'left_hand', [0.57, -0.74], 0.2)
+    this.addJoint('torso', 'right_upper_arm', [-0.47, -1.68], 1)
+    this.addJoint('right_upper_arm', 'right_forearm', [-0.54, -1.15], 0.4)
+    this.addJoint('right_forearm', 'right_hand', [-0.46, -0.62], 0.2)
     this.addJoint('torso', 'hips', [0.05, -0.72], 0.1)
     this.addJoint('hips', 'left_upper_leg', [0.30, -0.42], 0.1)
     this.addJoint('left_upper_leg', 'left_shin', [0.30, 0.02], 0.1)
@@ -223,8 +223,8 @@ class Ragdoll extends Entity {
     })
 
     // because backwards everything...
-    this.addJoint('right_hand', 'left_stick', this.extremeties.right_hand, 2, 10)
-    this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, 2, 10)
+    this.addJoint('right_hand', 'left_stick', this.extremeties.right_hand, 2, 4)
+    this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, 2, 4)
   }
 
   addPart (textures, name, offset, mass) {
@@ -250,10 +250,9 @@ class Ragdoll extends Entity {
   updateExtremeties (offsets) {
     for (var part in offsets) {
       this.parts[part].body.position = this.relative(this.extremeties[part])
-      this.parts[part].body.position[0] += offsets[part][0]
-      this.parts[part].body.position[1] += offsets[part][1]
+      this.parts[part].body.position[0] += offsets[part][0] * 2
+      this.parts[part].body.position[1] += offsets[part][1] * 2
     }
-    this.score = `${(this.parts[part].body.position[0] - this.position[0]).toFixed(2)}, ${(this.parts[part].body.position[1] - this.position[1]).toFixed(2)}`
   }
 
   pushGame (game) {
@@ -442,7 +441,6 @@ class Game {
     }
     this.entities.dave.updateExtremeties(offset)
     this.entities.jack.updateExtremeties(offset)
-    this.data.score = this.entities.dave.score
   }
 
   init () {
