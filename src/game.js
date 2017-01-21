@@ -132,18 +132,64 @@ class Entity {
   }
 }
 
-/*
 class Ragdoll extends Entity {
-  constructor(game, position) {
+  constructor (name, position, scale, textures) {
+    super(null, 1, null)
+    this.name = name
+    this.position = position
+    this.scale = scale
     this.parts = {}
+    this.addPart(textures, 'head', [0, 2.5], 1)
+    this.addPart(textures, 'hips', [0, 1], 1)
+    this.addPart(textures, 'left_hand', [-2, 2], 0.1)
+    this.addPart(textures, 'left_forearm', [-1.5, 2], 0.1)
+    this.addPart(textures, 'left_upper_arm', [-1, 2], 0.1)
+    this.addPart(textures, 'left_upper_leg', [-1, 1], 0.1)
+    this.addPart(textures, 'left_shin', [-1, 0], 0.1)
+    this.addPart(textures, 'right_hand', [1, 2], 0.1)
+    this.addPart(textures, 'right_forearm', [1.5, 2], 0.1)
+    this.addPart(textures, 'right_upper_arm', [1, 2], 0.1)
+    this.addPart(textures, 'right_upper_leg', [1, 1], 0.1)
+    this.addPart(textures, 'right_shin', [1, 0], 0.1)
   }
 
-  def update (dt) {
+  addPart (textures, name, offset, mass) {
+    this.parts[name] = new Entity(textures[`${this.name}_${name}`], this.scale, {
+      mass: mass,
+      position: offset,
+      angularVelocity: 0
+    })
   }
 
-  def debug (viewport, show)
+  pushGame (game) {
+    for (var name in this.parts) {
+      this.parts[name].pushGame(game)
+    }
+    if (this.parts.head) {
+      this.parts.head.sprite.interactive = true
+      this.parts.head.sprite.on('mousedown', () => { game.sounds.wilhelm.play() })
+      this.parts.head.sprite.on('touchstart', () => { game.sounds.wilhelm.play() })
+    }
+  }
+
+  popGame (game) {
+    for (var name in this.parts) {
+      this.parts[name].popGame(game)
+    }
+  }
+
+  update (dt) {
+    for (var name in this.parts) {
+      this.parts[name].update(dt)
+    }
+  }
+
+  debug (viewport, show) {
+    for (var name in this.parts) {
+      this.parts[name].debug(viewport, show)
+    }
+  }
 }
-*/
 
 class Game {
   constructor (elementId, data) {
@@ -263,25 +309,9 @@ class Game {
   spawn () {
     this.addEntity('stage', this.textures.stage, 0.01)
 
-    this.addEntity('lhand', this.textures.dave_left_hand, 0.002, {
-      mass: 0.1,
-      position: [-1, 2.0],
-      angularVelocity: 0
-    })
-    this.addEntity('rhand', this.textures.dave_right_hand, 0.002, {
-      mass: 0.1,
-      position: [1, 2.5],
-      angularVelocity: 0
-    })
-    this.addEntity('head', this.textures.dave_head, 0.002, {
-      mass: 1,
-      position: [0, 2.5],
-      angularVelocity: 1
-    })
+    this.entities['doll'] = new Ragdoll('jack', [0, 0], 0.005, this.textures)
+    this.entities['doll'].pushGame(this)
 
-    this.entities.head.sprite.interactive = true
-    this.entities.head.sprite.on('mousedown', () => { this.sounds.wilhelm.play() })
-    this.entities.head.sprite.on('touchstart', () => { this.sounds.wilhelm.play() })
     this.addEntity('ground', null, null, { type: 'plane', position: [0, -2.5] })
     if (this.data.music) {
       this.sounds.music.play()
