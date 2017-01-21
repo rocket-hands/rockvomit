@@ -228,10 +228,8 @@ class Ragdoll extends Entity {
 
   updateExtremeties (offsets) {
     for (var part in offsets) {
-      this.parts[part].body.position[0] += offsets[part][0] * 0.2
-      this.parts[part].body.position[1] += offsets[part][1] * 0.2
-      this.parts['head'].body.position[0] += offsets[part][0] * 0.01
-      this.parts['head'].body.position[1] += offsets[part][1] * 0.01
+      this.parts[part].body.position[0] += offsets[part][0] * 0.1
+      this.parts[part].body.position[1] += offsets[part][1] * 0.1
     }
   }
 
@@ -372,9 +370,7 @@ class Game {
   updateHands () {
     let offset = {
       left_hand: [0, 0],
-      right_hand: [0, 0],
-      left_foot: [0, 0],
-      right_foot: [0, 0]
+      right_hand: [0, 0]
     }
     var joy
     if ((joy = this.getJoystick(...this.lhandJoy))) {
@@ -383,14 +379,6 @@ class Game {
     if ((joy = this.getJoystick(...this.rhandJoy))) {
       offset.right_hand = joy
     }
-    /*
-    if ((joy = this.getJoystick(...this.lfootJoy))) {
-      offset.left_foot = joy
-    }
-    if ((joy = this.getJoystick(...this.rfootJoy))) {
-      offset.right_foot = joy
-    }
-    */
     this.entities.dave.updateExtremeties(offset)
     this.entities.jack.updateExtremeties(offset)
   }
@@ -453,10 +441,10 @@ class Game {
   spawn () {
     this.addEntity('stage', this.textures.stage, 0.01)
 
-    this.entities['jack'] = new Ragdoll('jack', [-1.2, 1.0], 0.004, this.textures)
+    this.entities['jack'] = new Ragdoll('jack', [-1.2, 1.5], 0.004, this.textures)
     this.entities['jack'].pushGame(this)
 
-    this.entities['dave'] = new Ragdoll('dave', [1.2, 1.0], 0.002, this.textures)
+    this.entities['dave'] = new Ragdoll('dave', [1.2, 1.5], 0.002, this.textures)
     this.entities['dave'].pushGame(this)
 
     this.addEntity('ground', null, null, { type: 'plane', group: 'ground', position: [0, 2.3], angle: Math.PI })
