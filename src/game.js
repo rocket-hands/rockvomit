@@ -177,21 +177,21 @@ class Ragdoll extends Entity {
       right_stick: [0.5, -2]
     }
 
-    this.addPart(textures, 'hips', [0.05, -0.7], 0.1)
+    this.addPart(textures, 'left_foot', this.extremeties.left_foot, 1)
+    this.addPart(textures, 'left_shin', [0.3, 0.25], 0.1)
+    this.addPart(textures, 'left_upper_leg', [0.3, -0.2], 0.1)
+    this.addPart(textures, 'right_foot', this.extremeties.right_foot, 1)
+    this.addPart(textures, 'right_shin', [-0.15, 0.25], 0.1)
+    this.addPart(textures, 'right_upper_leg', [-0.17, -0.2], 0.1)
+    this.addPart(textures, 'hips', [0.05, -0.6], 0.1)
     this.addPart(textures, 'torso', [0, -1.3], 0.1)
     this.addPart(textures, 'head', [0, -2.15], 0.1)
     this.addPart(textures, 'left_hand', this.extremeties.left_hand, 0.1)
     this.addPart(textures, 'left_forearm', [0.6, -1], 0.1)
     this.addPart(textures, 'left_upper_arm', [0.5, -1.55], 0.1)
-    this.addPart(textures, 'left_foot', this.extremeties.left_foot, 1)
-    this.addPart(textures, 'left_shin', [0.3, 0.25], 0.1)
-    this.addPart(textures, 'left_upper_leg', [0.3, -0.2], 0.1)
     this.addPart(textures, 'right_hand', this.extremeties.right_hand, 0.1)
     this.addPart(textures, 'right_forearm', [-0.52, -0.9], 0.1)
     this.addPart(textures, 'right_upper_arm', [-0.5, -1.45], 0.1)
-    this.addPart(textures, 'right_foot', this.extremeties.right_foot, 1)
-    this.addPart(textures, 'right_shin', [-0.15, 0.25], 0.1)
-    this.addPart(textures, 'right_upper_leg', [-0.17, -0.2], 0.1)
 
     this.addJoint('head', 'torso', [0, -1.86], 0.25)
     this.addJoint('torso', 'left_upper_arm', [0.4, -1.75], 1)
