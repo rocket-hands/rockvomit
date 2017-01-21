@@ -140,6 +140,7 @@ class Game {
     this.state = 'running'
     this.resize()
     this.spawn()
+    this.createDivider()
     this.loop()
   }
 
@@ -247,6 +248,7 @@ class Game {
     this.viewport.position.x = this.game.renderer.width / 2 + this.camera.x
     this.viewport.position.y = this.game.renderer.height / 2 + this.camera.y
     let ratio = this.canvas.scrollWidth / this.canvas.scrollHeight
+    // this.camera.z = 50
     this.viewport.scale.x = this.camera.z
     this.viewport.scale.y = -this.camera.z
     if (ratio < 1.6) this.viewport.scale.y *= (ratio / 1.6)
@@ -365,7 +367,31 @@ class Game {
       }
     }
     this.debug()
+    this.updateDivider()
     requestAnimationFrame(this.loop.bind(this))
+  }
+
+  createDivider () {
+    this.divider = new PIXI.Graphics()
+    this.divider.position.x = 0
+    this.divider.position.y = -1
+    this.divider.clear()
+    this.divider.lineStyle(0.1, 0xffff00)
+
+    this.divider.moveTo(0.0, -8)
+    this.divider.lineTo(0.0, 8)
+    this.divider.endFill()
+    this.viewport.addChild(this.divider)
+    var blurFilter = new PIXI.filters.BlurFilter()
+    blurFilter.blur = 10
+    this.divider.filters = [blurFilter]
+    this.divider.blendMode = PIXI.BLEND_MODES.SCREEN
+    // To work out which way to split the controls this returns a float from 0 -> 4.0
+    // (game.divider.transform.rotation % 2*Math.PI) / (2*Math.PI) * 4
+  }
+
+  updateDivider () {
+    this.divider.transform.rotation = this.gametime
   }
 
   debug () {
