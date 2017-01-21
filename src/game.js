@@ -85,8 +85,8 @@ class Entity {
         case 'box':
         default:
           shape = new p2.Box({
-            width: this.sprite.width * 0.7,
-            height: this.sprite.height * 0.7
+            width: this.sprite.width * 0.9,
+            height: this.sprite.height * 0.9
           })
           shape.collisionGroup = group
           shape.collisionMask = mask
@@ -161,27 +161,43 @@ class Ragdoll extends Entity {
     this.position = position
     this.scale = scale
     this.parts = {}
+    this.joints = []
     this.extremeties = {
-      left_hand: [0.65, -0.6],
-      right_hand: [-0.65, -0.6],
-      left_foot: [0.3, 1.1],
-      right_foot: [-0.3, 1.1]
+      left_hand: [0.55, -0.6],
+      right_hand: [-0.42, -0.6],
+      left_foot: [0.28, 0.6],
+      right_foot: [-0.1, 0.6]
     }
     this.addPart(textures, 'left_hand', this.extremeties.left_hand, 0.1)
-    this.addPart(textures, 'left_forearm', [0.7, -1], 0.1)
-    this.addPart(textures, 'left_upper_arm', [0.6, -1.5], 0.1)
+    this.addPart(textures, 'left_forearm', [0.6, -1], 0.1)
+    this.addPart(textures, 'left_upper_arm', [0.5, -1.55], 0.1)
     this.addPart(textures, 'left_foot', this.extremeties.left_foot, 0.1)
-    this.addPart(textures, 'left_shin', [0.3, 0.7], 0.1)
-    this.addPart(textures, 'left_upper_leg', [0.3, 0.2], 0.1)
+    this.addPart(textures, 'left_shin', [0.3, 0.25], 0.1)
+    this.addPart(textures, 'left_upper_leg', [0.3, -0.2], 0.1)
     this.addPart(textures, 'right_hand', this.extremeties.right_hand, 0.1)
-    this.addPart(textures, 'right_forearm', [-0.7, -1], 0.1)
-    this.addPart(textures, 'right_upper_arm', [-0.6, -1.5], 0.1)
+    this.addPart(textures, 'right_forearm', [-0.52, -0.9], 0.1)
+    this.addPart(textures, 'right_upper_arm', [-0.5, -1.45], 0.1)
     this.addPart(textures, 'right_foot', this.extremeties.right_foot, 0.1)
-    this.addPart(textures, 'right_shin', [-0.3, 0.7], 0.1)
-    this.addPart(textures, 'right_upper_leg', [-0.3, 0.2], 0.1)
-    this.addPart(textures, 'hips', [0, -0.4], 1)
-    this.addPart(textures, 'torso', [0, -1.3], 1)
-    this.addPart(textures, 'head', [0, -2.2], 1)
+    this.addPart(textures, 'right_shin', [-0.15, 0.25], 0.1)
+    this.addPart(textures, 'right_upper_leg', [-0.17, -0.2], 0.1)
+    this.addPart(textures, 'hips', [0.05, -0.7], 0.1)
+    this.addPart(textures, 'torso', [0, -1.3], 0.1)
+    this.addPart(textures, 'head', [0, -2.15], 0.1)
+
+    this.addJoint('head', 'torso')
+    this.addJoint('torso', 'left_upper_arm')
+    this.addJoint('left_upper_arm', 'left_forearm')
+    this.addJoint('left_forearm', 'left_hand')
+    this.addJoint('torso', 'right_upper_arm')
+    this.addJoint('right_upper_arm', 'right_forearm')
+    this.addJoint('right_forearm', 'right_hand')
+    this.addJoint('torso', 'hips')
+    this.addJoint('hips', 'left_upper_leg')
+    this.addJoint('left_upper_leg', 'left_shin')
+    this.addJoint('left_shin', 'left_foot')
+    this.addJoint('hips', 'right_upper_leg')
+    this.addJoint('right_upper_leg', 'right_shin')
+    this.addJoint('right_shin', 'right_foot')
   }
 
   addPart (textures, name, offset, mass) {
@@ -193,20 +209,34 @@ class Ragdoll extends Entity {
     })
   }
 
+  addJoint (partA, partB) {
+    let bodyA = this.parts[partA].body
+    let bodyB = this.parts[partB].body
+    let pivot = [(bodyA.position[0] + bodyB.position[0]) / 2, (bodyA.position[1] + bodyB.position[1]) / 2]
+    let joint = new p2.RevoluteConstraint(bodyA, bodyB, { worldPivot: pivot, maxForce: 1000000 })
+    joint.setLimits(-Math.PI / 8, Math.PI / 8)
+    this.joints.push(joint)
+  }
+
   relative (position) {
     return [this.position[0] + position[0], this.position[1] + position[1]]
   }
 
   updateExtremeties (offsets) {
     for (var part in offsets) {
-      let offset = [this.extremeties[part][0] + offsets[part][0], this.extremeties[part][1] + offsets[part][1]]
-      this.parts[part].body.position = this.relative(offset)
+      this.parts[part].body.position[0] += offsets[part][0] * 0.1
+      this.parts[part].body.position[1] += offsets[part][1] * 0.1
+      this.parts['head'].body.position[0] += offsets[part][0] * 0.01
+      this.parts['head'].body.position[1] += offsets[part][1] * 0.01
     }
   }
 
   pushGame (game) {
     for (var name in this.parts) {
       this.parts[name].pushGame(game)
+    }
+    for (var joint of this.joints) {
+      game.world.addConstraint(joint)
     }
     if (this.parts.head) {
       this.parts.head.sprite.interactive = true
@@ -356,7 +386,7 @@ class Game {
 
   init () {
     this.world = new p2.World()
-    this.world.gravity[1] = 0
+    this.world.gravity[1] *= -0.1
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
     window.game = this
     this.viewport = new PIXI.Container()
