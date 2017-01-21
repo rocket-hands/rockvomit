@@ -4,6 +4,7 @@
       <q-toolbar-title :padding="1">
         Waveform Hero | Score: {{score}}
       </q-toolbar-title>
+      <q-toggle v-model="debug">Debug</q-toggle>
     </div>
     <div class="layout-view">
       <canvas id="viewport"></canvas>
@@ -18,7 +19,9 @@
   export default {
     data () {
       return {
-        score: 0
+        score: 0,
+        debug: true,
+        music: false
       }
     },
     methods: {
@@ -29,6 +32,9 @@
     mounted () {
       Loading.show()
       game = new Game('viewport', this.$data)
+      if (DEV) {
+        window.hack = game
+      }
       game.boot()
       Loading.hide()
       if (PROD) {

@@ -77,9 +77,35 @@ class Entity {
     }
   }
 
-  debug (graphics) {
+  debug (viewport, show) {
     if (this.body) {
-      graphics.drawCircle(this.body.position[0], this.body.position[1], 0.1)
+      if (!this.debugSprite && show) {
+        this.debugSprite = new PIXI.Graphics()
+        this.debugSprite.lineStyle(0.01, 0x00FF00)
+        for (var shape of this.body.shapes) {
+          switch (shape.constructor.name) {
+            case 'Box':
+              window.foo = shape.vertices
+              this.debugSprite.moveTo(...shape.vertices[0])
+              for (var vertex of shape.vertices) {
+                this.debugSprite.lineTo(...vertex)
+              }
+              break
+            case 'Plane':
+              this.debugSprite.drawCircle(...shape.position, 0.05)
+              break
+          }
+        }
+        viewport.addChild(this.debugSprite)
+      }
+      if (show) {
+        this.debugSprite.position.x = this.body.position[0]
+        this.debugSprite.position.y = this.body.position[1]
+        this.debugSprite.rotation = this.body.angle
+      } else if (this.debugSprite) {
+        viewport.removeChild(this.debugSprite)
+        this.debugSprite = null
+      }
     }
   }
 }
@@ -96,7 +122,6 @@ class Game {
       y: 0,
       z: 100
     }
-    this.debugLayer = null
     this.entities = {}
   }
 
@@ -190,8 +215,8 @@ class Game {
     this.addEntity('stage', this.textures.stage, { scale: 0.01 })
     this.addEntity('head', this.textures.dave_head, {
       scale: 0.002,
-      width: 1,
-      height: 1
+      width: 0.5,
+      height: 0.5
     }, {
       mass: 1,
       position: [0, 2.5],
@@ -201,7 +226,7 @@ class Game {
     this.entities.head.sprite.on('mousedown', () => { this.sounds.wilhelm.play() })
     this.entities.head.sprite.on('touchstart', () => { this.sounds.wilhelm.play() })
     this.addEntity('ground', null, { type: 'plane' }, { position: [0, -2.5] })
-    if (PROD) {
+    if (this.data.music) {
       this.sounds.music.play()
     }
   }
@@ -222,24 +247,14 @@ class Game {
         this.update(this.frequency)
       }
     }
-    // this.data.score = this.gametime
-    if (DEV) {
-      this.debug()
-    }
+    this.debug()
     requestAnimationFrame(this.loop.bind(this))
   }
 
   debug () {
-    if (this.debugLayer) {
-      this.viewport.removeChild(this.debugLayer)
-    }
-    this.debugLayer = new PIXI.Graphics()
-    this.debugLayer.beginFill(0xe74c3c)
     for (var name in this.entities) {
-      this.entities[name].debug(this.debugLayer)
+      this.entities[name].debug(this.viewport, this.data.debug)
     }
-    this.debugLayer.endFill()
-    this.viewport.addChild(this.debugLayer)
   }
 }
 
