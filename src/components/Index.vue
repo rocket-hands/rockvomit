@@ -9,6 +9,11 @@
     <div class="layout-view">
       <canvas id="viewport"></canvas>
     </div>
+    <div slot="footer" class="toolbar">
+      <q-toolbar-title :padding="1">
+        {{message}}
+      </q-toolbar-title>
+    </div>
   </q-layout>
 </template>
 
@@ -22,7 +27,8 @@
       return {
         score: 0,
         debug: true,
-        music: false
+        music: false,
+        message: 'Press a button you two!!'
       }
     },
     methods: {

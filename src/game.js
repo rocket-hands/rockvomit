@@ -159,7 +159,28 @@ class Game {
     window.game = undefined
   }
 
+  checkReady () {
+    // check any gamepads that aren't in playersReady
+    for (var id of Object.keys(this.gamepads)) {
+      if (!(id in this.playersReady)) {
+        if (this.gamepads[id].buttons.find((button) => { return button.pressed })) {
+          this.playersReady.push(id)
+        }
+      }
+    }
+    if (this.playersReady.length === 0) {
+      this.data.message = 'Hey you two!!! Push a button!'
+    } else if (this.playersReady.length === 1) {
+      this.data.message = 'Press that button player 2!!'
+    } else if (this.playersReady.length === 2) {
+      this.data.message = "Let's do this!"
+    }
+  }
+
   update (dt) {
+    if (this.playersReady.length < 2) {
+      this.checkReady()
+    }
     this.updateHands()
     this.world.step(dt)
     for (var name in this.entities) {
@@ -167,13 +188,48 @@ class Game {
     }
   }
 
-  updateHands () {
-    if (this.gamepads[0]) {
-      this.entities.lhand.body.position[0] = this.gamepads[0].axes[0] - 0.5
-      this.entities.lhand.body.position[1] = -this.gamepads[0].axes[1]
-      this.entities.rhand.body.position[0] = this.gamepads[0].axes[2] + 0.5
-      this.entities.rhand.body.position[1] = -this.gamepads[0].axes[3]
+  setJoys () {
+    this.lhandJoy = ['0', 0, 1]
+    this.rhandJoy = ['0', 2, 3]
+    this.lfootJoy = ['0', 0, 1]
+    this.rfootJoy = ['0', 2, 3]
+  }
+
+  getJoystick (player, axis1, axis2) {
+    if (this.gamepads[player]) {
+      return [this.gamepads[player].axes[axis1], this.gamepads[player].axes[axis2]]
+    } else {
+      return undefined
     }
+  }
+
+  updateHands () {
+    let lhand = [-0.5, 0]
+    let rhand = [0.5, 0]
+    let lfoot = [-0.5, -2]
+    let rfoot = [0.5, -2]
+    var joy
+    if ((joy = this.getJoystick(...this.lhandJoy))) {
+      lhand[0] += joy[0]
+      lhand[1] += -joy[1]
+    }
+    if ((joy = this.getJoystick(...this.rhandJoy))) {
+      rhand[0] += joy[0]
+      rhand[1] += -joy[1]
+    }
+    if ((joy = this.getJoystick(...this.lfootJoy))) {
+      lfoot[0] += joy[0]
+      lfoot[1] += -joy[1]
+    }
+    if ((joy = this.getJoystick(...this.rfootJoy))) {
+      rfoot[0] += joy[0]
+      rfoot[1] += -joy[1]
+    }
+
+    this.entities.lhand.body.position = lhand
+    this.entities.rhand.body.position = rhand
+    this.entities.lfoot.body.position = lfoot
+    this.entities.rfoot.body.position = rfoot
   }
 
   init () {
@@ -183,6 +239,8 @@ class Game {
 
     this.viewport = new PIXI.Container()
     this.game.stage.addChild(this.viewport)
+    this.playersReady = []
+    this.setJoys()
   }
 
   resize () {
@@ -242,6 +300,26 @@ class Game {
       gravityScale: 0
     })
     this.addEntity('rhand', this.textures.dave_right_hand, {
+      scale: 0.002,
+      width: 0.3,
+      height: 0.3
+    }, {
+      mass: 0.1,
+      position: [0, 2.5],
+      angularVelocity: 0,
+      gravityScale: 0
+    })
+    this.addEntity('lfoot', this.textures.dave_left_hand, {
+      scale: 0.002,
+      width: 0.3,
+      height: 0.3
+    }, {
+      mass: 0.1,
+      position: [0, 2.5],
+      angularVelocity: 0,
+      gravityScale: 0
+    })
+    this.addEntity('rfoot', this.textures.dave_right_hand, {
       scale: 0.002,
       width: 0.3,
       height: 0.3
