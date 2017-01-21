@@ -66,8 +66,8 @@ class Entity {
           case 'box':
           default:
           this.body.addShape(new p2.Box({
-            width: this.sprite.width * 0.8,
-            height: this.sprite.height * 0.8
+            width: this.sprite.width * 0.7,
+            height: this.sprite.height * 0.7
           }))
       }
     }
@@ -139,19 +139,19 @@ class Ragdoll extends Entity {
     this.position = position
     this.scale = scale
     this.parts = {}
-    this.addPart(textures, 'head', [0, -2.5], 1)
+    this.addPart(textures, 'left_hand', [0.65, -0.6], 0.1)
+    this.addPart(textures, 'left_forearm', [0.7, -1], 0.1)
+    this.addPart(textures, 'left_upper_arm', [0.6, -1.5], 0.1)
+    this.addPart(textures, 'left_shin', [0.3, 0.7], 0.1)
+    this.addPart(textures, 'left_upper_leg', [0.3, 0.2], 0.1)
+    this.addPart(textures, 'right_hand', [-0.65, -0.6], 0.1)
+    this.addPart(textures, 'right_forearm', [-0.7, -1], 0.1)
+    this.addPart(textures, 'right_upper_arm', [-0.6, -1.5], 0.1)
+    this.addPart(textures, 'right_shin', [-0.3, 0.7], 0.1)
+    this.addPart(textures, 'right_upper_leg', [-0.3, 0.2], 0.1)
+    this.addPart(textures, 'hips', [0, -0.4], 1)
     this.addPart(textures, 'torso', [0, -1.3], 1)
-    this.addPart(textures, 'hips', [0, 0], 1)
-    // this.addPart(textures, 'left_hand', [-2, 2], 0.1)
-    // this.addPart(textures, 'left_forearm', [-1.5, 2], 0.1)
-    // this.addPart(textures, 'left_upper_arm', [-1, 2], 0.1)
-    this.addPart(textures, 'left_upper_leg', [-0.3, 0.8], 0.1)
-    this.addPart(textures, 'left_shin', [-0.3, 1.4], 0.1)
-    // this.addPart(textures, 'right_hand', [1, 2], 0.1)
-    // this.addPart(textures, 'right_forearm', [1.5, 2], 0.1)
-    // this.addPart(textures, 'right_upper_arm', [1, 2], 0.1)
-    this.addPart(textures, 'right_upper_leg', [0.3, 0.8], 0.1)
-    this.addPart(textures, 'right_shin', [0.3, 1.4], 0.1)
+    this.addPart(textures, 'head', [0, -2.2], 1)
   }
 
   addPart (textures, name, offset, mass) {
@@ -319,7 +319,7 @@ class Game {
 
   init () {
     this.world = new p2.World()
-    this.world.gravity[1] *= 0
+    this.world.gravity[1] *= -0.2
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
     window.game = this
     this.viewport = new PIXI.Container()
@@ -375,13 +375,13 @@ class Game {
   spawn () {
     this.addEntity('stage', this.textures.stage, 0.01)
 
-    this.entities['jack'] = new Ragdoll('jack', [-2, 0], 0.004, this.textures)
+    this.entities['jack'] = new Ragdoll('jack', [-1.2, 1.4], 0.004, this.textures)
     this.entities['jack'].pushGame(this)
 
-    this.entities['dave'] = new Ragdoll('dave', [2, 0], 0.002, this.textures)
+    this.entities['dave'] = new Ragdoll('dave', [1.2, 1.4], 0.002, this.textures)
     this.entities['dave'].pushGame(this)
 
-    this.addEntity('ground', null, null, { type: 'plane', position: [0, 2.5], angle: Math.PI })
+    this.addEntity('ground', null, null, { type: 'plane', position: [0, 2.3], angle: Math.PI })
     this.addEntity('right_wall', null, null, { type: 'plane', position: [4, 0], angle: Math.PI / 2 })
     this.addEntity('left_wall', null, null, { type: 'plane', position: [-4, 0], angle: (3 * Math.PI) / 2 })
 

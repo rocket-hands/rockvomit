@@ -26,8 +26,8 @@
     data () {
       return {
         score: 0,
-        debug: true,
-        music: false,
+        debug: DEV,
+        music: PROD
         message: ''
       }
     },
@@ -39,9 +39,6 @@
     mounted () {
       Loading.show()
       game = new Game('viewport', this.$data)
-      if (DEV) {
-        window.hack = game
-      }
       game.boot(() => {
         Loading.hide()
         if (PROD) {
