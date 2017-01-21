@@ -271,6 +271,44 @@ class Ragdoll extends Entity {
   }
 }
 
+class Spinner {
+  constructor (position, color, beat = 4, offset = 0, spinSpeed = 10, initialAngle = 0, width = 10, blur = 10) {
+    beat = beat * 7 / 4
+    this.blur = blur
+    this.beat = beat
+    this.offset = offset
+    this.spinSpeed = spinSpeed
+    this.gfx = new PIXI.Graphics()
+    this.gfx.position.x = position[0]
+    this.gfx.position.y = position[1]
+    this.gfx.clear()
+    this.gfx.lineStyle(width / 100, color)
+    this.gfx.moveTo(0.0, -6)
+    this.gfx.lineTo(0.0, 6)
+    var blurFilter = new PIXI.filters.BlurFilter()
+    blurFilter.blur = 10
+    this.gfx.filters = [blurFilter]
+    this.gfx.blendMode = PIXI.BLEND_MODES.SCREEN
+    this.gfx.transform.rotation = initialAngle
+  }
+
+  pushGame (game) {
+    game.viewport.addChild(this.gfx)
+  }
+
+  popGame (game) {
+    game.viewport.removeChild(this.gfx)
+  }
+
+  update (game) {
+    let time = (game.gametime + this.offset)
+    this.gfx.transform.rotation = time / this.spinSpeed
+    let amp = Math.sin(time * this.beat)
+    this.gfx.filters[0].blur = amp * this.blur + this.blur * 2
+  }
+
+}
+
 class Game {
   constructor (elementId, data) {
     this.state = 'waiting'
@@ -288,6 +326,7 @@ class Game {
     this.getGamepads = getGamepads
     this.debugLayer = null
     this.entities = {}
+    this.effects = []
   }
 
   boot (callback) {
@@ -300,8 +339,7 @@ class Game {
     this.state = 'running'
     this.resize()
     this.spawn()
-    this.createDivider()
-    this.addDivider()
+    this.addEffects()
     this.loop()
   }
 
@@ -317,7 +355,7 @@ class Game {
       this.textures[texture].destroy(true)
     }
     PIXI.loader.reset()
-    this.removeDivider()
+    this.removeEffects()
     this.viewport.destroy()
     this.game.destroy()
     this.world.clear()
@@ -486,48 +524,37 @@ class Game {
         dt -= this.frequency
         this.gametime += this.frequency
         this.update(this.frequency)
+        this.updateEffects(this.frequency)
       }
     } else {
       this.gametime = ms / 1000
     }
     this.debug()
-    this.updateDivider()
     requestAnimationFrame(this.loop.bind(this))
   }
 
-  createDivider () {
-    this.divider = new PIXI.Graphics()
-    this.divider.position.x = 0
-    this.divider.position.y = 1
-    this.divider.clear()
-    this.divider.lineStyle(0.1, 0xffff00)
-    this.divider.moveTo(0.0, -6)
-    this.divider.lineTo(0.0, 6)
-    this.divider.lineStyle(0.1, 0x0000ff)
-    this.divider.moveTo(0.7, -8)
-    this.divider.lineTo(-0.7, 8)
-    this.divider.lineStyle(0.1, 0xff0000)
-    this.divider.moveTo(-0.7, -8)
-    this.divider.lineTo(0.7, 8)
-    var blurFilter = new PIXI.filters.BlurFilter()
-    blurFilter.blur = 10
-    this.divider.filters = [blurFilter]
-    this.divider.blendMode = PIXI.BLEND_MODES.SCREEN
-    // To work out which way to split the controls this returns a float from 0 -> 4.0
-    // (game.divider.transform.rotation % 2*Math.PI) / (2*Math.PI) * 4
+  removeEffects () {
+    for (var effect of this.effects) {
+      effect.popGame(this)
+      this.effects.pop(effect)
+    }
   }
 
-  addDivider () {
-    this.viewport.addChild(this.divider)
+  addEffects () {
+    this.addEffect(new Spinner([1, 0], 0xff00ff, 4, 0, 10, 0, 15, 15))
+    this.addEffect(new Spinner([2, 1], 0x00ff00, 8, 0, 2, 0, 8, 5))
+    this.addEffect(new Spinner([-2, 2], 0xff0000, 8, 0, 2.7, 10, 20, 15))
   }
 
-  removeDivider () {
-    this.viewport.removeChild(this.divider)
+  addEffect (effect) {
+    this.effects.push(effect)
+    effect.pushGame(this)
   }
 
-  updateDivider () {
-    this.divider.transform.rotation = this.gametime / 10
-    this.divider.filters[0].blur = Math.abs(((this.gametime * 50) % 20) - 10) + 5
+  updateEffects (dt) {
+    for (var effect of this.effects) {
+      effect.update(this)
+    }
   }
 
   debug () {
