@@ -41,6 +41,49 @@ const TEXTURES = [
   'stage'
 ]
 
+class Entity {
+  constructor (texture, size, physics) {
+    this.sprite = null
+    this.body = null
+    if (texture) {
+      this.sprite = new PIXI.Sprite(texture)
+      this.sprite.anchor.x = 0.5
+      this.sprite.anchor.y = 0.5
+      if (size) {
+        this.sprite.scale.x = size.scale
+        this.sprite.scale.y = size.scale
+      }
+    }
+    if (physics) {
+      this.body = new p2.Body(physics)
+      if (size) {
+        switch (size.type) {
+          case 'plane':
+            this.body.addShape(new p2.Plane())
+            break
+          case 'box':
+          default:
+            this.body.addShape(new p2.Box(size))
+        }
+      }
+    }
+  }
+
+  update (dt) {
+    if (this.sprite && this.body) {
+      this.sprite.position.x = this.body.position[0]
+      this.sprite.position.y = this.body.position[1]
+      this.sprite.rotation = this.body.angle
+    }
+  }
+
+  debug (graphics) {
+    if (this.body) {
+      graphics.drawCircle(this.body.position[0], this.body.position[1], 0.1)
+    }
+  }
+}
+
 class Game {
   constructor (elementId, data) {
     this.state = 'waiting'
@@ -53,6 +96,8 @@ class Game {
       y: 0,
       z: 100
     }
+    this.debugLayer = null
+    this.entities = {}
   }
 
   boot () {
@@ -70,6 +115,9 @@ class Game {
 
   stop () {
     this.state = 'stopping'
+    for (var name in this.entities) {
+      this.removeEntity(name)
+    }
     for (var sound of SOUNDS) {
       this.sounds[sound].unload()
     }
@@ -82,22 +130,16 @@ class Game {
 
   update (dt) {
     this.world.step(dt)
-    this.sprite.position.x = this.head.position[0]
-    this.sprite.position.y = this.head.position[1]
-    this.sprite.rotation = this.head.angle
-  }
-
-  play (sound) {
-    this.sounds[sound].play()
+    for (var name in this.entities) {
+      this.entities[name].update(dt)
+    }
   }
 
   init () {
+    this.world = new p2.World()
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
-
     this.viewport = new PIXI.Container()
     this.game.stage.addChild(this.viewport)
-
-    this.world = new p2.World()
   }
 
   resize () {
@@ -106,8 +148,8 @@ class Game {
     let ratio = this.canvas.scrollWidth / this.canvas.scrollHeight
     this.viewport.scale.x = this.camera.z
     this.viewport.scale.y = -this.camera.z
-    if (ratio > 1.6) this.viewport.scale.x /= (ratio / 1.6)
     if (ratio < 1.6) this.viewport.scale.y *= (ratio / 1.6)
+    if (ratio > 1.6) this.viewport.scale.y *= (ratio / 1.6)
   }
 
   load () {
@@ -123,34 +165,44 @@ class Game {
     }
   }
 
+  addEntity (name, texture = null, size = null, physics = null) {
+    this.entities[name] = new Entity(texture, size, physics)
+    if (this.entities[name].sprite) {
+      this.viewport.addChild(this.entities[name].sprite)
+    }
+    if (this.entities[name].body) {
+      this.world.addBody(this.entities[name].body)
+    }
+    return this.entities[name]
+  }
+
+  removeEntity (name) {
+    if (this.entities[name].body) {
+      this.world.removeBody(this.entities[name].body)
+    }
+    if (this.entities[name].sprite) {
+      this.viewport.removeChild(this.entities[name].sprite)
+    }
+    delete (this.entities[name])
+  }
+
   spawn () {
-    let stage = new PIXI.Sprite(this.textures['stage'])
-    stage.anchor.x = 0.5
-    stage.anchor.y = 0.5
-    stage.scale.x = 0.01
-    stage.scale.y = 0.01
-    this.viewport.addChild(stage)
-
-    this.sprite = new PIXI.Sprite(this.textures['dave_head'])
-    this.sprite.anchor.x = 0.5
-    this.sprite.anchor.y = 0.5
-    this.sprite.width = 1
-    this.sprite.height = 1
-    this.sprite.interactive = true
-    this.sprite.on('mousedown', () => { this.play('wilhelm') })
-    this.sprite.on('touchstart', () => { this.play('wilhelm') })
-    this.viewport.addChild(this.sprite)
-
-    let ground = new p2.Body({ position: [0, -2.5] })
-    ground.addShape(new p2.Plane())
-    this.world.addBody(ground)
-
-    this.head = new p2.Body({ mass: 1, position: [0, 3], angularVelocity: 10 })
-    this.head.addShape(new p2.Box({ width: 1, height: 1 }))
-    this.world.addBody(this.head)
-
+    this.addEntity('stage', this.textures.stage, { scale: 0.01 })
+    this.addEntity('head', this.textures.dave_head, {
+      scale: 0.002,
+      width: 1,
+      height: 1
+    }, {
+      mass: 1,
+      position: [0, 2.5],
+      angularVelocity: 1
+    })
+    this.entities.head.sprite.interactive = true
+    this.entities.head.sprite.on('mousedown', () => { this.sounds.wilhelm.play() })
+    this.entities.head.sprite.on('touchstart', () => { this.sounds.wilhelm.play() })
+    this.addEntity('ground', null, { type: 'plane' }, { position: [0, -2.5] })
     if (PROD) {
-      this.play('music')
+      this.sounds.music.play()
     }
   }
 
@@ -170,8 +222,24 @@ class Game {
         this.update(this.frequency)
       }
     }
-    this.data.score = this.gametime
+    // this.data.score = this.gametime
+    if (DEV) {
+      this.debug()
+    }
     requestAnimationFrame(this.loop.bind(this))
+  }
+
+  debug () {
+    if (this.debugLayer) {
+      this.viewport.removeChild(this.debugLayer)
+    }
+    this.debugLayer = new PIXI.Graphics()
+    this.debugLayer.beginFill(0xe74c3c)
+    for (var name in this.entities) {
+      this.entities[name].debug(this.debugLayer)
+    }
+    this.debugLayer.endFill()
+    this.viewport.addChild(this.debugLayer)
   }
 }
 
