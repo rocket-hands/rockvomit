@@ -36,27 +36,28 @@
       if (DEV) {
         window.hack = game
       }
-      game.boot()
-      Loading.hide()
-      if (PROD) {
-        Dialog.create({
-          title: 'Get Ready',
-          message: 'Start that crazy musak?',
-          noBackdropDismiss: true,
-          noEscDismiss: true,
-          buttons: [
-            {
-              label: 'Yerp',
-              handler () {
-                game.run()
+      game.boot(() => {
+        Loading.hide()
+        if (PROD) {
+          Dialog.create({
+            title: 'Get Ready',
+            message: 'Start that crazy musak?',
+            noBackdropDismiss: true,
+            noEscDismiss: true,
+            buttons: [
+              {
+                label: 'Yerp',
+                handler () {
+                  game.run()
+                }
               }
-            }
-          ]
-        })
-      } else {
-        game.run()
-      }
-      window.addEventListener('resize', this.resize)
+            ]
+          })
+        } else {
+          game.run()
+        }
+        window.addEventListener('resize', this.resize)
+      })
     },
     beforeDestroy () {
       window.removeEventListener('resize', this.resize)
