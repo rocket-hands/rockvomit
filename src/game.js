@@ -2,6 +2,7 @@
 import 'pixi.js'
 import p2 from 'p2'
 import { Howl } from 'howler'
+import { scanGamepads, getGamepads } from 'gamepad'
 
 const FPS = 60
 
@@ -122,6 +123,10 @@ class Game {
       y: 0,
       z: 100
     }
+    this.gamepads = getGamepads()
+    this.scanGamepads = scanGamepads
+    this.getGamepads = getGamepads
+    this.debugLayer = null
     this.entities = {}
   }
 
@@ -151,18 +156,31 @@ class Game {
     }
     this.viewport.destroy()
     this.game.destroy()
+    window.game = undefined
   }
 
   update (dt) {
+    this.updateHands()
     this.world.step(dt)
     for (var name in this.entities) {
       this.entities[name].update(dt)
     }
   }
 
+  updateHands () {
+    if (this.gamepads[0]) {
+      this.entities.lhand.body.position[0] = this.gamepads[0].axes[0] - 0.5
+      this.entities.lhand.body.position[1] = -this.gamepads[0].axes[1]
+      this.entities.rhand.body.position[0] = this.gamepads[0].axes[2] + 0.5
+      this.entities.rhand.body.position[1] = -this.gamepads[0].axes[3]
+    }
+  }
+
   init () {
     this.world = new p2.World()
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
+    window.game = this
+
     this.viewport = new PIXI.Container()
     this.game.stage.addChild(this.viewport)
   }
@@ -213,6 +231,26 @@ class Game {
 
   spawn () {
     this.addEntity('stage', this.textures.stage, { scale: 0.01 })
+    this.addEntity('lhand', this.textures.dave_left_hand, {
+      scale: 0.002,
+      width: 0.3,
+      height: 0.3
+    }, {
+      mass: 0.1,
+      position: [0, 2.5],
+      angularVelocity: 0,
+      gravityScale: 0
+    })
+    this.addEntity('rhand', this.textures.dave_right_hand, {
+      scale: 0.002,
+      width: 0.3,
+      height: 0.3
+    }, {
+      mass: 0.1,
+      position: [0, 2.5],
+      angularVelocity: 0,
+      gravityScale: 0
+    })
     this.addEntity('head', this.textures.dave_head, {
       scale: 0.002,
       width: 0.5,
@@ -232,6 +270,7 @@ class Game {
   }
 
   loop (ms = 0.0) {
+    scanGamepads()
     if (this.state !== 'running') {
       return
     }
