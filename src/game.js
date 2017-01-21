@@ -46,6 +46,14 @@ const TEXTURES = [
   'stage'
 ]
 
+const COLLISION_GROUPS = {
+  ground: 0b0001,
+  jack: 0b0010,
+  dave: 0b0100,
+  other: 0b1000,
+  all: 0b1111
+}
+
 class Entity {
   constructor (texture, scale, physics) {
     this.sprite = null
@@ -61,18 +69,28 @@ class Entity {
     }
     if (physics) {
       let type = physics.type
+      let group = COLLISION_GROUPS[physics.group] || COLLISION_GROUPS.other
+      let mask = COLLISION_GROUPS.all ^ group
+      let shape = null
       delete (physics.type)
+      delete (physics.group)
       this.body = new p2.Body(physics)
       switch (type) {
         case 'plane':
-          this.body.addShape(new p2.Plane())
+          shape = new p2.Plane()
+          shape.collisionGroup = group
+          shape.collisionMask = mask
+          this.body.addShape(shape)
           break
         case 'box':
         default:
-          this.body.addShape(new p2.Box({
+          shape = new p2.Box({
             width: this.sprite.width * 0.7,
             height: this.sprite.height * 0.7
-          }))
+          })
+          shape.collisionGroup = group
+          shape.collisionMask = mask
+          this.body.addShape(shape)
       }
     }
   }
@@ -145,8 +163,8 @@ class Ragdoll extends Entity {
     this.parts = {}
     this.extremeties = {
       left_hand: [0.65, -0.6],
-      right_hand: [0.3, 1.1],
-      left_foot: [-0.65, -0.6],
+      right_hand: [-0.65, -0.6],
+      left_foot: [0.3, 1.1],
       right_foot: [-0.3, 1.1]
     }
     this.addPart(textures, 'left_hand', this.extremeties.left_hand, 0.1)
@@ -171,7 +189,7 @@ class Ragdoll extends Entity {
       mass: mass,
       position: this.relative(offset),
       angularVelocity: 0,
-      gravityScale: 0
+      group: this.name
     })
   }
 
@@ -338,7 +356,7 @@ class Game {
 
   init () {
     this.world = new p2.World()
-    this.world.gravity[1] *= 0
+    this.world.gravity[1] = 0
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
     window.game = this
     this.viewport = new PIXI.Container()
@@ -400,9 +418,9 @@ class Game {
     this.entities['dave'] = new Ragdoll('dave', [1.2, 1.0], 0.002, this.textures)
     this.entities['dave'].pushGame(this)
 
-    this.addEntity('ground', null, null, { type: 'plane', position: [0, 2.3], angle: Math.PI })
-    this.addEntity('right_wall', null, null, { type: 'plane', position: [4, 0], angle: Math.PI / 2 })
-    this.addEntity('left_wall', null, null, { type: 'plane', position: [-4, 0], angle: (3 * Math.PI) / 2 })
+    this.addEntity('ground', null, null, { type: 'plane', group: 'ground', position: [0, 2.3], angle: Math.PI })
+    this.addEntity('right_wall', null, null, { type: 'plane', group: 'ground', position: [4, 0], angle: Math.PI / 2 })
+    this.addEntity('left_wall', null, null, { type: 'plane', group: 'ground', position: [-4, 0], angle: (3 * Math.PI) / 2 })
 
     if (this.data.music) {
       this.sounds.music.play()
