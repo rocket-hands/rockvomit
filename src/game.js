@@ -309,6 +309,7 @@ class Game {
     this.resize()
     this.spawn()
     this.createDivider()
+    this.addDivider()
     this.loop()
   }
 
@@ -324,6 +325,7 @@ class Game {
       this.textures[texture].destroy(true)
     }
     PIXI.loader.reset()
+    this.removeDivider()
     this.viewport.destroy()
     this.game.destroy()
     this.world.clear()
@@ -504,11 +506,14 @@ class Game {
     this.divider.position.y = 1
     this.divider.clear()
     this.divider.lineStyle(0.1, 0xffff00)
-
-    this.divider.moveTo(0.0, -8)
-    this.divider.lineTo(0.0, 8)
-    this.divider.endFill()
-    this.viewport.addChild(this.divider)
+    this.divider.moveTo(0.0, -6)
+    this.divider.lineTo(0.0, 6)
+    this.divider.lineStyle(0.1, 0x0000ff)
+    this.divider.moveTo(0.7, -8)
+    this.divider.lineTo(-0.7, 8)
+    this.divider.lineStyle(0.1, 0xff0000)
+    this.divider.moveTo(-0.7, -8)
+    this.divider.lineTo(0.7, 8)
     var blurFilter = new PIXI.filters.BlurFilter()
     blurFilter.blur = 10
     this.divider.filters = [blurFilter]
@@ -517,8 +522,17 @@ class Game {
     // (game.divider.transform.rotation % 2*Math.PI) / (2*Math.PI) * 4
   }
 
+  addDivider () {
+    this.viewport.addChild(this.divider)
+  }
+
+  removeDivider () {
+    this.viewport.removeChild(this.divider)
+  }
+
   updateDivider () {
-    this.divider.transform.rotation = this.gametime
+    this.divider.transform.rotation = this.gametime / 10
+    this.divider.filters[0].blur = Math.abs(((this.gametime * 50) % 20) - 10) + 5
   }
 
   debug () {
