@@ -173,44 +173,46 @@ class Ragdoll extends Entity {
     this.parts = {}
     this.joints = []
     this.extremeties = {
-      left_hand: [0.55, -0.6],
-      right_hand: [-0.42, -0.6],
-      left_foot: [0.28, 0.6],
-      right_foot: [-0.1, 0.6],
+      left_hand: [0.50, -0.6],
+      right_hand: [-0.42, -0.55],
+      left_foot: [0.55, 0.7],
+      right_foot: [-0.45, 0.7],
       left_stick: [-0.5, -2],
-      right_stick: [0.5, -2]
+      right_stick: [0.5, -2],
+      left_trigger: [1, -0.5],
+      right_trigger: [-1, -0.5]
     }
 
-    this.addPart(textures, 'left_foot', this.extremeties.left_foot, 1)
-    this.addPart(textures, 'left_shin', [0.3, 0.25], 0.1)
-    this.addPart(textures, 'left_upper_leg', [0.3, -0.2], 0.1)
-    this.addPart(textures, 'right_foot', this.extremeties.right_foot, 1)
-    this.addPart(textures, 'right_shin', [-0.15, 0.25], 0.1)
-    this.addPart(textures, 'right_upper_leg', [-0.17, -0.2], 0.1)
-    this.addPart(textures, 'hips', [0.05, -0.6], 0.1)
-    this.addPart(textures, 'torso', [0, -1.3], 0.1)
-    this.addPart(textures, 'head', [0, -2.15], 0.1)
-    this.addPart(textures, 'left_hand', this.extremeties.left_hand, 0.1)
-    this.addPart(textures, 'left_forearm', [0.6, -1], 0.1)
-    this.addPart(textures, 'left_upper_arm', [0.5, -1.55], 0.1)
-    this.addPart(textures, 'right_hand', this.extremeties.right_hand, 0.1)
-    this.addPart(textures, 'right_forearm', [-0.52, -0.9], 0.1)
-    this.addPart(textures, 'right_upper_arm', [-0.5, -1.45], 0.1)
+    this.addPart(textures, 'left_foot', this.extremeties.left_foot, -1.4, 1)
+    this.addPart(textures, 'left_shin', [0.43, 0.35], 0, 0.1)
+    this.addPart(textures, 'left_upper_leg', [0.35, -0.1], -0.4, 0.1)
+    this.addPart(textures, 'right_foot', this.extremeties.right_foot, 1.4, 1)
+    this.addPart(textures, 'right_shin', [-0.30, 0.35], 0, 0.1)
+    this.addPart(textures, 'right_upper_leg', [-0.23, -0.1], 0.4, 0.1)
+    this.addPart(textures, 'hips', [0.05, -0.55], 0, 0.1)
+    this.addPart(textures, 'torso', [0, -1.3], 0, 0.1)
+    this.addPart(textures, 'head', [0, -2.15], 0, 0.1)
+    this.addPart(textures, 'left_upper_arm', [0.5, -1.55], -0.3, 0.1)
+    this.addPart(textures, 'right_upper_arm', [-0.5, -1.45], 0.3, 0.1)
+    this.addPart(textures, 'left_forearm', [0.60, -1.05], 0.2, 0.1)
+    this.addPart(textures, 'right_forearm', [-0.55, -0.95], -0.2, 0.1)
+    this.addPart(textures, 'left_hand', this.extremeties.left_hand, 0, 0.1)
+    this.addPart(textures, 'right_hand', this.extremeties.right_hand, 0, 0.1)
 
-    this.addJoint('head', 'torso', [0, -1.86], 0.25)
-    this.addJoint('torso', 'left_upper_arm', [0.4, -1.75], 1)
-    this.addJoint('left_upper_arm', 'left_forearm', [0.61, -1.25], 0.4)
-    this.addJoint('left_forearm', 'left_hand', [0.57, -0.74], 0.2)
-    this.addJoint('torso', 'right_upper_arm', [-0.47, -1.68], 1)
-    this.addJoint('right_upper_arm', 'right_forearm', [-0.54, -1.15], 0.4)
-    this.addJoint('right_forearm', 'right_hand', [-0.46, -0.62], 0.2)
-    this.addJoint('torso', 'hips', [0.05, -0.72], 0.04)
-    this.addJoint('hips', 'left_upper_leg', [0.30, -0.42], 0.2)
-    this.addJoint('left_upper_leg', 'left_shin', [0.30, 0.02], 0.5)
-    this.addJoint('left_shin', 'left_foot', [0.30, 0.49], 0.3)
-    this.addJoint('hips', 'right_upper_leg', [-0.17, -0.43], 0.2)
-    this.addJoint('right_upper_leg', 'right_shin', [-0.16, 0.05], 0.5)
-    this.addJoint('right_shin', 'right_foot', [-0.15, 0.49], 0.3)
+    this.addJoint('head', 'torso', [0, -1.86], [0.25, 0.25])
+    this.addJoint('torso', 'left_upper_arm', [0.41, -1.78], null)
+    this.addJoint('left_upper_arm', 'left_forearm', [0.66, -1.30], [0, 0.5])
+    this.addJoint('left_forearm', 'left_hand', [0.51, -0.73], [0.1, 0.1])
+    this.addJoint('torso', 'right_upper_arm', [-0.45, -1.68], null)
+    this.addJoint('right_upper_arm', 'right_forearm', [-0.58, -1.18], [0.5, 0])
+    this.addJoint('right_forearm', 'right_hand', [-0.46, -0.66], [0.1, 0.1])
+    this.addJoint('torso', 'hips', [0.05, -0.77], [0.04, 0.04])
+    this.addJoint('hips', 'left_upper_leg', [0.28, -0.26], [0.3, 0.3])
+    this.addJoint('left_upper_leg', 'left_shin', [0.43, 0.13], [0, 0.5])
+    this.addJoint('left_shin', 'left_foot', [0.45, 0.56], [0.3, 0.3])
+    this.addJoint('hips', 'right_upper_leg', [-0.20, -0.26], [0.3, 0.3])
+    this.addJoint('right_upper_leg', 'right_shin', [-0.31, 0.13], [0.5, 0])
+    this.addJoint('right_shin', 'right_foot', [-0.33, 0.56], [0.3, 0.3])
 
     this.parts.head.body.gravityScale = -10
     this.parts.torso.body.gravityScale = -5
@@ -225,16 +227,29 @@ class Ragdoll extends Entity {
       mass: 0,
       position: this.relative(this.extremeties.right_stick)
     })
+    this.parts.left_trigger = new Entity(null, 1, {
+      type: 'circle',
+      mass: 0,
+      position: this.relative(this.extremeties.left_trigger)
+    })
+    this.parts.right_trigger = new Entity(null, 1, {
+      type: 'circle',
+      mass: 0,
+      position: this.relative(this.extremeties.right_trigger)
+    })
 
     // because backwards everything...
-    this.addJoint('right_hand', 'left_stick', this.extremeties.right_hand, 2, 4)
-    this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, 2, 4)
+    this.addJoint('right_hand', 'left_stick', this.extremeties.right_hand, [2, 2], 8)
+    this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, [2, 2], 8)
+    this.addJoint('right_foot', 'left_trigger', this.extremeties.right_foot, [2, 2], 20)
+    this.addJoint('left_foot', 'right_trigger', this.extremeties.left_foot, [2, 2], 20)
   }
 
-  addPart (textures, name, offset, mass) {
+  addPart (textures, name, offset, rotation, mass) {
     this.parts[name] = new Entity(textures[`${this.name}_${name}`], this.scale, {
       mass: mass,
       position: this.relative(offset),
+      angle: rotation,
       group: this.name
     })
   }
@@ -243,7 +258,9 @@ class Ragdoll extends Entity {
     let bodyA = this.parts[partA].body
     let bodyB = this.parts[partB].body
     let joint = new p2.RevoluteConstraint(bodyA, bodyB, { worldPivot: this.relative(pivot), maxForce: force })
-    joint.setLimits(-Math.PI * limit, Math.PI * limit)
+    if (limit) {
+      joint.setLimits(-Math.PI * limit[0], Math.PI * limit[1])
+    }
     this.joints.push(joint)
   }
 
@@ -378,35 +395,37 @@ class Game {
     }
   }
 
-  setJoys () {
-    this.lhandJoy = ['0', 0, 1]
-    this.rhandJoy = ['0', 2, 3]
-    this.lfootJoy = ['0', 0, 1]
-    this.rfootJoy = ['0', 2, 3]
-  }
-
-  getJoystick (player, axis1, axis2) {
+  getJoystick (player) {
     if (this.gamepads[player]) {
-      return [this.gamepads[player].axes[axis1], this.gamepads[player].axes[axis2]]
+      let but1 = 1 - 2 * this.gamepads[player].buttons[6].value
+      let but2 = 1 - 2 * this.gamepads[player].buttons[7].value
+      if (but1 >= but2) {
+        but1 = 1
+      } else if (but2 >= but1) {
+        but2 = 1
+      }
+      return {
+        left_stick: [this.gamepads[player].axes[0], this.gamepads[player].axes[1]],
+        right_stick: [this.gamepads[player].axes[2], this.gamepads[player].axes[3]],
+        left_trigger: [0, but1],
+        right_trigger: [0, but2]
+      }
     } else {
       return undefined
     }
   }
 
   updateHands () {
-    let offset = {
+    let empty = {
       left_stick: [0, 0],
-      right_stick: [0, 0]
+      right_stick: [0, 0],
+      left_trigger: [0, 0],
+      right_trigger: [0, 0]
     }
-    var joy
-    if ((joy = this.getJoystick(...this.lhandJoy))) {
-      offset.left_stick = joy
-    }
-    if ((joy = this.getJoystick(...this.rhandJoy))) {
-      offset.right_stick = joy
-    }
-    this.entities.dave.updateExtremeties(offset)
-    this.entities.jack.updateExtremeties(offset)
+    let joy1 = this.getJoystick('0')
+    let joy2 = this.getJoystick('1')
+    this.entities.dave.updateExtremeties(joy2 || joy1 || empty)
+    this.entities.jack.updateExtremeties(joy1 || empty)
   }
 
   init () {
@@ -417,7 +436,6 @@ class Game {
     this.viewport = new PIXI.Container()
     this.game.stage.addChild(this.viewport)
     this.playersReady = []
-    this.setJoys()
   }
 
   resize () {
@@ -467,10 +485,10 @@ class Game {
   spawn () {
     this.addEntity('stage', this.textures.stage, 0.01)
 
-    this.entities['jack'] = new Ragdoll('jack', [-1.2, 1.5], 0.004, this.textures)
+    this.entities['jack'] = new Ragdoll('jack', [-1.2, 1.4], 0.004, this.textures)
     this.entities['jack'].pushGame(this)
 
-    this.entities['dave'] = new Ragdoll('dave', [1.2, 1.5], 0.002, this.textures)
+    this.entities['dave'] = new Ragdoll('dave', [1.2, 1.4], 0.002, this.textures)
     this.entities['dave'].pushGame(this)
 
     this.addEntity('ground', null, null, { type: 'plane', group: 'ground', position: [0, 2.3], angle: Math.PI })
