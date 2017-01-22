@@ -366,6 +366,7 @@ class Game {
     PIXI.loader.reset()
     this.removeEffects()
     this.viewport.destroy()
+    this.splash.destroy()
     this.game.destroy()
     this.world.clear()
     this.gametime = null
@@ -440,19 +441,27 @@ class Game {
     this.world.gravity[1] *= -1
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
     window.game = this
+    this.splash = new PIXI.Container()
     this.viewport = new PIXI.Container()
     this.game.stage.addChild(this.viewport)
+    this.game.stage.addChild(this.splash)
     this.playersReady = []
   }
 
   resize () {
     this.viewport.position.x = this.game.renderer.width / 2 + this.camera.x
     this.viewport.position.y = this.game.renderer.height / 2 + this.camera.y
+    this.splash.position.x = this.game.renderer.width / 2 + this.camera.x
+    this.splash.position.y = this.game.renderer.height / 2 + this.camera.y
     let ratio = this.canvas.scrollWidth / this.canvas.scrollHeight
     this.viewport.scale.x = this.camera.z
     this.viewport.scale.y = this.camera.z
+    this.splash.scale.x = this.camera.z
+    this.splash.scale.y = this.camera.z
     if (ratio < 1.6) this.viewport.scale.y *= (ratio / 1.6)
     if (ratio > 1.6) this.viewport.scale.x /= (ratio / 1.6)
+    if (ratio < 1.6) this.splash.scale.y *= (ratio / 1.6)
+    if (ratio > 1.6) this.splash.scale.x /= (ratio / 1.6)
   }
 
   load (callback) {
@@ -494,6 +503,21 @@ class Game {
   }
 
   spawn () {
+    let rock = new PIXI.Sprite(this.textures.rock)
+    let vomit = new PIXI.Sprite(this.textures.vomit)
+    rock.anchor.x = 0.5
+    vomit.anchor.x = 0.5
+    rock.anchor.y = 1
+    vomit.anchor.y = 0
+    rock.scale.x = 0.01
+    rock.scale.y = 0.01
+    vomit.scale.x = 0.01
+    vomit.scale.y = 0.01
+    rock.position.y = 0.5
+    vomit.position.y = 0.5
+    this.splash.addChild(rock)
+    this.splash.addChild(vomit)
+
     this.addEntity('stage', this.textures.stage, 0.01)
 
     this.entities['jack'] = new Ragdoll('jack', [-1.2, 1.4], 0.004, this.textures)
@@ -535,6 +559,7 @@ class Game {
       this.viewport.visible = false
     } else if (dt < 5) {
       if (this.viewport.visible === false) {
+        this.viewport.alpha = 0.1
         if (this.data.music) {
           this.sounds.music.play()
         }
@@ -545,9 +570,15 @@ class Game {
         dt -= this.frequency
         this.gametime += this.frequency
         this.update(this.frequency)
+        if (this.splash.visible && this.splash.alpha > 0.0) {
+          this.splash.alpha -= 0.02
+          this.viewport.alpha += 0.02
+        } else {
+          this.splash.visible = false
+          this.viewport.alpha = 1
+        }
         if (this.started) {
           let elapsed = this.gametime - this.started
-          // console.log(elapsed)
           this.choreograph(elapsed)
         }
         this.updateEffects(this.frequency)
