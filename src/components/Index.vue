@@ -1,18 +1,7 @@
 <template>
   <q-layout>
-    <div slot="header" class="toolbar">
-      <q-toolbar-title :padding="1">
-        Waveform Hero | Score: {{score}}
-      </q-toolbar-title>
-      <q-toggle v-model="debug">Debug</q-toggle>
-    </div>
     <div class="layout-view">
       <canvas id="viewport"></canvas>
-    </div>
-    <div slot="footer" class="toolbar">
-      <q-toolbar-title :padding="1">
-        {{message}}
-      </q-toolbar-title>
     </div>
   </q-layout>
 </template>
