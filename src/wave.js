@@ -2,7 +2,7 @@
 import 'pixi.js'
 
 class Wave {
-  constructor (position, color, beat = 4, lambda = 10, offset = 0, width = 10, blur = 10, height = 2) {
+  constructor (position, color, beat = 4, lambda = 10, offset = 0, width = 10, blur = 10, height = 2, alpha = 1.0) {
     beat = beat * 7 / 4
     this.lambda = lambda
     this.width = width
@@ -20,6 +20,7 @@ class Wave {
     blurFilter.blur = blur
     this.gfx.filters = [blurFilter]
     this.gfx.blendMode = PIXI.BLEND_MODES.SCREEN
+    this.gfx.alpha = alpha
   }
 
   pushGame (game) {

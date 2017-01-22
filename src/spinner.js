@@ -13,8 +13,8 @@ class Spinner {
     this.gfx.position.y = position[1]
     this.gfx.clear()
     this.gfx.lineStyle(width / 100, color)
-    this.gfx.moveTo(0.0, -6)
-    this.gfx.lineTo(0.0, 6)
+    this.gfx.moveTo(0.0, -10)
+    this.gfx.lineTo(0.0, 10)
     var blurFilter = new PIXI.filters.BlurFilter()
     blurFilter.blur = 10
     this.gfx.filters = [blurFilter]
