@@ -315,9 +315,11 @@ class Ragdoll extends Entity {
 
 class Game {
   constructor (elementId, data) {
+    this.timeprop = 7.619 / 8.0
     this.state = 'waiting'
     this.data = data
     this.gametime = null
+    this.started = null
     this.slaptime = null
     this.frequency = 1.0 / FPS
     this.canvas = document.getElementById(elementId)
@@ -507,19 +509,15 @@ class Game {
       if ((event.shapeA.collisionGroup === COLLISION_GROUPS.jack && event.shapeB.collisionGroup === COLLISION_GROUPS.dave) || (event.shapeA.collisionGroup === COLLISION_GROUPS.dave && event.shapeB.collisionGroup === COLLISION_GROUPS.jack)) {
         if (event.contactEquation.multiplier > 30 && (!this.slaptime || this.gametime - this.slaptime > 0.1)) {
           let id = this.sounds.slap.play()
-          let volume = (event.contactEquation.multiplier - 30) / 25
-          if (volume > 1) {
-            volume = 1
+          let volume = ((event.contactEquation.multiplier - 30) / 150) + 0.1
+          if (volume > 0.4) {
+            volume = 0.4
           }
           this.sounds.slap.volume(volume, id)
           this.slaptime = this.gametime
         }
       }
     })
-
-    if (this.data.music) {
-      this.sounds.music.play()
-    }
   }
 
   loop (ms = 0.0) {
@@ -535,11 +533,22 @@ class Game {
       this.gametime = ms / 1000
       this.viewport.visible = false
     } else if (dt < 5) {
+      if (this.viewport.visible === false) {
+        if (this.data.music) {
+          this.sounds.music.play()
+        }
+        this.started = this.gametime
+      }
       this.viewport.visible = true
       while (dt > this.frequency) {
         dt -= this.frequency
         this.gametime += this.frequency
         this.update(this.frequency)
+        if (this.started) {
+          let elapsed = this.gametime - this.started
+          console.log(elapsed)
+          this.choreograph(elapsed)
+        }
         this.updateEffects(this.frequency)
       }
     } else {
@@ -547,6 +556,62 @@ class Game {
     }
     this.debug()
     requestAnimationFrame(this.loop.bind(this))
+  }
+
+  choreograph (elapsed) {
+    let loop = 76.19
+    let location = elapsed % loop
+    let chunk = Math.floor(location / 7.619)
+    if (chunk < 1) {
+      this.targetWave.height = 0.2
+      this.targetWave.beat = 4
+      this.spinner1.gfx.alpha = 0
+      this.spinner2.gfx.alpha = 0
+      this.spinner3.gfx.alpha = 0
+      this.spinner4.gfx.alpha = 0
+      this.backbeat.gfx.alpha = 0
+      this.targetWave.gfx.alpha = 0.1
+    } else if (chunk < 2) {
+      this.targetWave.height = 0.2
+      this.targetWave.beat = 4
+      this.spinner1.gfx.alpha = 0
+      this.spinner2.gfx.alpha = 1
+      this.spinner3.gfx.alpha = 0
+      this.spinner4.gfx.alpha = 0
+      this.backbeat.gfx.alpha = 1
+      this.targetWave.gfx.alpha = 0.2
+    } else if (chunk < 4) {
+      this.targetWave.height = 0.7
+      this.targetWave.beat = 5
+      this.spinner1.gfx.alpha = 1
+      this.spinner2.gfx.alpha = 1
+      this.spinner3.gfx.alpha = 0
+      this.spinner4.gfx.alpha = 0
+      this.backbeat.gfx.alpha = 1
+      this.targetWave.gfx.alpha = 0.4
+    } else if (chunk < 6) {
+      this.targetWave.height = 0.8
+      this.targetWave.beat = 8
+      this.spinner1.gfx.alpha = 1
+      this.spinner2.gfx.alpha = 1
+      this.spinner3.gfx.alpha = 1
+      this.spinner4.gfx.alpha = 1
+      this.spinner3.spinSpeed = 2
+      this.spinner4.spinSpeed = 1
+      this.backbeat.gfx.alpha = 1
+      this.targetWave.gfx.alpha = 0.5
+    } else {
+      this.targetWave.height = 1.0
+      this.targetWave.beat = 8
+      this.spinner1.gfx.alpha = 1
+      this.spinner2.gfx.alpha = 1
+      this.spinner3.gfx.alpha = 1
+      this.spinner4.gfx.alpha = 1
+      this.spinner3.spinSpeed = 1
+      this.spinner4.spinSpeed = 0.5
+      this.backbeat.gfx.alpha = 1
+      this.targetWave.gfx.alpha = 0.6
+    }
   }
 
   removeEffects () {
@@ -557,11 +622,17 @@ class Game {
   }
 
   addEffects () {
-    this.addEffect(new Spinner([1, 0], 0xff00ff, 4, 0, 10, 0, 15, 15))
-    this.addEffect(new Spinner([2, 1], 0x00ff00, 8, 0, 2, 0, 8, 5))
-    this.addEffect(new Spinner([-2, 2], 0xff0000, 8, 0, 2.7, 10, 20, 15))
-    this.addEffect(new Wave([0, 0], 0xffaa00, 4, 100, 0, 5, 20, 2.4))
-    this.targetWave = new Wave([0, 0], 0x9999ff, 3, 2, 0, 5, 1, 0.8, 0.75)
+    this.spinner1 = new Spinner([-2, 2], 0xff0000, 8 * this.timeprop, 0, 2.7, 10, 20, 15)
+    this.addEffect(this.spinner1)
+    this.spinner2 = new Spinner([1, 0], 0xff00ff, 4 * this.timeprop, 0, 10, 0, 15, 15)
+    this.addEffect(this.spinner2)
+    this.spinner3 = new Spinner([2, 1], 0x00ff00, 8 * this.timeprop, 0, 2, 0, 8, 5)
+    this.addEffect(this.spinner3)
+    this.spinner4 = new Spinner([-1, 1], 0xffff00, 16 * this.timeprop, 0, 1, 0, 6, 2)
+    this.addEffect(this.spinner4)
+    this.backbeat = new Wave([0, 0], 0xffaa00, 4, 100, 0, 5, 20, 2.4)
+    this.addEffect(this.backbeat)
+    this.targetWave = new Wave([0, 0], 0x9999ff, 3 * this.timeprop, 2, 29, 5, 1, 0.8, 0.75)
     this.addEffect(this.targetWave)
     this.spark1 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
     this.addEffect(this.spark1)
@@ -614,6 +685,7 @@ class Game {
       spark.emitter.maxParticles = 200
       spark.emitterContainer.scale.x *= 1.01
       spark.emitterContainer.scale.y *= 1.01
+      this.targetWave.gfx.alpha += 0.1
     } else {
       spark.emitter.maxParticles = 0
       spark.emitterContainer.scale.x *= 0.99
