@@ -539,7 +539,7 @@ class Game {
     this.addEffect(new Spinner([2, 1], 0x00ff00, 8, 0, 2, 0, 8, 5))
     this.addEffect(new Spinner([-2, 2], 0xff0000, 8, 0, 2.7, 10, 20, 15))
     // this.addEffect(new Wave([0, 0], 0x00ff00, 4, 100, 0, 5, 20, 2.4))
-    this.targetWave = new Wave([0, 0], 0x9999ff, 4, 2, 0, 5, 1, 1.1, 0.75)
+    this.targetWave = new Wave([0, 0], 0x9999ff, 3, 2, 0, 5, 1, 0.8, 0.75)
     this.addEffect(this.targetWave)
     this.spark1 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
     this.addEffect(this.spark1)
@@ -549,6 +549,14 @@ class Game {
     this.addEffect(this.spark3)
     this.spark4 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
     this.addEffect(this.spark4)
+    this.spark5 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
+    this.addEffect(this.spark5)
+    this.spark6 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
+    this.addEffect(this.spark6)
+    this.spark7 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
+    this.addEffect(this.spark7)
+    this.spark8 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
+    this.addEffect(this.spark8)
   }
 
   addEffect (effect) {
@@ -568,14 +576,38 @@ class Game {
     this.checkSparkWave(this.spark2, this.targetWave)
     this.checkSparkWave(this.spark3, this.targetWave)
     this.checkSparkWave(this.spark4, this.targetWave)
+    this.spark5.emitterContainer.position = this.entities.dave.parts.left_foot.sprite.position
+    this.spark6.emitterContainer.position = this.entities.dave.parts.right_foot.sprite.position
+    this.spark7.emitterContainer.position = this.entities.jack.parts.left_foot.sprite.position
+    this.spark8.emitterContainer.position = this.entities.jack.parts.right_foot.sprite.position
+    this.checkSparkWave(this.spark5, this.targetWave)
+    this.checkSparkWave(this.spark6, this.targetWave)
+    this.checkSparkWave(this.spark7, this.targetWave)
+    this.checkSparkWave(this.spark8, this.targetWave)
   }
 
   checkSparkWave (spark, wave) {
     let wavePos = wave.getWaveforX(spark.emitterContainer.position.x)
     if (Math.abs(wavePos[1] - spark.emitterContainer.position.y) < 0.2) {
       spark.emitter.maxParticles = 200
+      spark.emitterContainer.scale.x *= 1.01
+      spark.emitterContainer.scale.y *= 1.01
     } else {
       spark.emitter.maxParticles = 0
+      spark.emitterContainer.scale.x *= 0.99
+      spark.emitterContainer.scale.y *= 0.99
+    }
+    if (spark.emitterContainer.scale.x < 0.75) {
+      spark.emitterContainer.scale.x = 0.75
+    }
+    if (spark.emitterContainer.scale.y < 0.75) {
+      spark.emitterContainer.scale.y = 0.75
+    }
+    if (spark.emitterContainer.scale.x > 1.5) {
+      spark.emitterContainer.scale.x = 1.5
+    }
+    if (spark.emitterContainer.scale.y > 1.5) {
+      spark.emitterContainer.scale.y = 1.5
     }
   }
 

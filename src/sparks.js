@@ -33,7 +33,7 @@ class Sparks {
         'min': 0.25,
         'max': 0.5
       },
-      'blendMode': 'overlay',
+      'blendMode': 'screen',
       'frequency': 0.001,
       'emitterLifetime': 0,
       'maxParticles': 200,
@@ -53,6 +53,8 @@ class Sparks {
     this.emitter = new PIXI.particles.Emitter(this.emitterContainer, art, config)
     this.emitter.particleConstructor = PIXI.particles.Particle
     this.emitter.scale = [0.05, 0.05]
+    this.emitterContainer.scale.x = 0.75
+    this.emitterContainer.scale.y = 0.75
     this.emitterContainer.blendMode = PIXI.BLEND_MODES.COLOR_DODGE
   }
 
