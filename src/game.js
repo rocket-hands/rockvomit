@@ -11,7 +11,8 @@ const FPS = 60
 
 const SOUNDS = [
   'wilhelm',
-  'music'
+  'music',
+  'slap'
 ]
 
 const TEXTURES = [
@@ -317,6 +318,7 @@ class Game {
     this.state = 'waiting'
     this.data = data
     this.gametime = null
+    this.slaptime = null
     this.frequency = 1.0 / FPS
     this.canvas = document.getElementById(elementId)
     this.camera = {
@@ -362,7 +364,8 @@ class Game {
     this.viewport.destroy()
     this.game.destroy()
     this.world.clear()
-    this.gametime = 0
+    this.gametime = null
+    this.slaptime = null
     window.game = undefined
   }
 
@@ -446,7 +449,7 @@ class Game {
     this.viewport.scale.x = this.camera.z
     this.viewport.scale.y = this.camera.z
     if (ratio < 1.6) this.viewport.scale.y *= (ratio / 1.6)
-    if (ratio > 1.6) this.viewport.scale.y *= (ratio / 1.6)
+    if (ratio > 1.6) this.viewport.scale.x /= (ratio / 1.6)
   }
 
   load (callback) {
@@ -494,6 +497,20 @@ class Game {
     this.addEntity('ground', null, null, { type: 'plane', group: 'ground', position: [0, 2.3], angle: Math.PI })
     this.addEntity('right_wall', null, null, { type: 'plane', group: 'ground', position: [4, 0], angle: Math.PI / 2 })
     this.addEntity('left_wall', null, null, { type: 'plane', group: 'ground', position: [-4, 0], angle: (3 * Math.PI) / 2 })
+
+    this.world.on('impact', (event) => {
+      if ((event.shapeA.collisionGroup === COLLISION_GROUPS.jack && event.shapeB.collisionGroup === COLLISION_GROUPS.dave) || (event.shapeA.collisionGroup === COLLISION_GROUPS.dave && event.shapeB.collisionGroup === COLLISION_GROUPS.jack)) {
+        if (event.contactEquation.multiplier > 30 && (!this.slaptime || this.gametime - this.slaptime > 0.1)) {
+          let id = this.sounds.slap.play()
+          let volume = (event.contactEquation.multiplier - 25) / 100
+          if (volume > 1) {
+            volume = 1
+          }
+          this.sounds.slap.volume(volume, id)
+          this.slaptime = this.gametime
+        }
+      }
+    })
 
     if (this.data.music) {
       this.sounds.music.play()
