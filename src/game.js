@@ -48,7 +48,9 @@ const TEXTURES = [
   'jack_right_upper_leg',
   'labs',
   'stage',
-  'spark'
+  'spark',
+  'rock',
+  'vomit'
 ]
 
 const COLLISION_GROUPS = {
