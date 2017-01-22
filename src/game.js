@@ -662,12 +662,12 @@ class Game {
   }
 
   cameraPulse (beat) {
-    this.camera.z = 105 + Math.sin(this.gametime * (this.timeprop * beat)) * 5
+    this.camera.z = 105 + Math.sin(this.gametime * (this.timeprop * beat)) * 2
     this.resize()
   }
 
   cameraVomit (beat) {
-    this.viewport.rotation = Math.sin(this.gametime * (this.timeprop * beat)) * 0.075
+    this.viewport.rotation = Math.sin(this.gametime * (this.timeprop * beat)) * 0.025
   }
 
   cameraReset () {
