@@ -4,7 +4,7 @@ RockVomit
 =========
 
 Ragdoll rhythm game made for #GGJ17. Play in the web browser at
-[rockvomit.kranzky.com](https://rockvomit.kranky.com/) with one or two game
+[rockvomit.kranzky.com](https://rockvomit.kranzky.com/) with one or two game
 controllers. Make waves!
 
 Want to see the game in action? Watch the
