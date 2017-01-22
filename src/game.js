@@ -454,7 +454,6 @@ class Game {
     this.splash.position.x = this.game.renderer.width / 2 + this.camera.x
     this.splash.position.y = this.game.renderer.height / 2 + this.camera.y
     let ratio = this.canvas.scrollWidth / this.canvas.scrollHeight
-    // this.camera.z = 50
     this.viewport.scale.x = this.camera.z
     this.viewport.scale.y = this.camera.z
     this.splash.scale.x = this.camera.z
@@ -596,6 +595,7 @@ class Game {
     let location = elapsed % loop
     let chunk = Math.floor(location / 7.619)
     if (chunk < 1) {
+      this.cameraReset()
       this.targetWave.height = 0.2
       this.targetWave.beat = 4
       this.spinner1.gfx.alpha = 0
@@ -633,7 +633,21 @@ class Game {
       this.spinner4.spinSpeed = 1
       this.backbeat.gfx.alpha = 1
       this.targetWave.gfx.alpha = 0.5
+    } else if (chunk < 8) {
+      this.cameraPulse(14)
+      this.targetWave.height = 1.0
+      this.targetWave.beat = 8
+      this.spinner1.gfx.alpha = 1
+      this.spinner2.gfx.alpha = 1
+      this.spinner3.gfx.alpha = 1
+      this.spinner4.gfx.alpha = 1
+      this.spinner3.spinSpeed = 1
+      this.spinner4.spinSpeed = 0.5
+      this.backbeat.gfx.alpha = 1
+      this.targetWave.gfx.alpha = 0.6
     } else {
+      this.cameraPulse(14)
+      this.cameraVomit(7)
       this.targetWave.height = 1.0
       this.targetWave.beat = 8
       this.spinner1.gfx.alpha = 1
@@ -645,6 +659,21 @@ class Game {
       this.backbeat.gfx.alpha = 1
       this.targetWave.gfx.alpha = 0.6
     }
+  }
+
+  cameraPulse (beat) {
+    this.camera.z = 105 + Math.sin(this.gametime * (this.timeprop * beat)) * 5
+    this.resize()
+  }
+
+  cameraVomit (beat) {
+    this.viewport.rotation = Math.sin(this.gametime * (this.timeprop * beat)) * 0.075
+  }
+
+  cameraReset () {
+    this.viewport.rotation = 0
+    this.camera.z = 100
+    this.resize()
   }
 
   removeEffects () {
