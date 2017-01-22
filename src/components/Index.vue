@@ -30,24 +30,7 @@
       game = new Game('viewport', this.$data)
       game.boot(() => {
         Loading.hide()
-        if (PROD) {
-          Dialog.create({
-            title: 'Get Ready',
-            message: 'Start that crazy musak?',
-            noBackdropDismiss: true,
-            noEscDismiss: true,
-            buttons: [
-              {
-                label: 'Yerp',
-                handler () {
-                  game.run()
-                }
-              }
-            ]
-          })
-        } else {
-          game.run()
-        }
+        game.run()
         window.addEventListener('resize', this.resize)
       })
     },
