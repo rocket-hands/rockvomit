@@ -1,7 +1,7 @@
 RockVomit
 =========
 
-[!RockVomit](https://raw.githubusercontent.com/rocket-hands/rockvomit/develop/rockvomit.png)
+![RockVomit](https://raw.githubusercontent.com/rocket-hands/rockvomit/develop/rockvomit.png)
 
 Ragdoll rhythm game made for #GGJ17. Play in the web browser at
 https://rockvomit.kranky.com/ with one or two game controllers. Make waves! If
