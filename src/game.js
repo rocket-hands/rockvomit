@@ -11,7 +11,8 @@ const FPS = 60
 
 const SOUNDS = [
   'wilhelm',
-  'music'
+  'music',
+  'slap'
 ]
 
 const TEXTURES = [
@@ -207,10 +208,10 @@ class Ragdoll extends Entity {
     this.addJoint('right_upper_arm', 'right_forearm', [-0.58, -1.18], [0.5, 0])
     this.addJoint('right_forearm', 'right_hand', [-0.46, -0.66], [0.1, 0.1])
     this.addJoint('torso', 'hips', [0.05, -0.77], [0.04, 0.04])
-    this.addJoint('hips', 'left_upper_leg', [0.28, -0.26], [0.3, 0.3])
+    this.addJoint('hips', 'left_upper_leg', [0.28, -0.26], [0.2, 0.2])
     this.addJoint('left_upper_leg', 'left_shin', [0.43, 0.13], [0, 0.5])
     this.addJoint('left_shin', 'left_foot', [0.45, 0.56], [0.3, 0.3])
-    this.addJoint('hips', 'right_upper_leg', [-0.20, -0.26], [0.3, 0.3])
+    this.addJoint('hips', 'right_upper_leg', [-0.20, -0.26], [0.2, 0.2])
     this.addJoint('right_upper_leg', 'right_shin', [-0.31, 0.13], [0.5, 0])
     this.addJoint('right_shin', 'right_foot', [-0.33, 0.56], [0.3, 0.3])
 
@@ -239,8 +240,8 @@ class Ragdoll extends Entity {
     })
 
     // because backwards everything...
-    this.addJoint('right_hand', 'left_stick', this.extremeties.right_hand, [2, 2], 8)
-    this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, [2, 2], 8)
+    this.addJoint('right_hand', 'left_stick', this.extremeties.right_hand, [2, 2], 20)
+    this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, [2, 2], 20)
     this.addJoint('right_foot', 'left_trigger', this.extremeties.right_foot, [2, 2], 20)
     this.addJoint('left_foot', 'right_trigger', this.extremeties.left_foot, [2, 2], 20)
   }
@@ -317,6 +318,7 @@ class Game {
     this.state = 'waiting'
     this.data = data
     this.gametime = null
+    this.slaptime = null
     this.frequency = 1.0 / FPS
     this.canvas = document.getElementById(elementId)
     this.camera = {
@@ -362,7 +364,8 @@ class Game {
     this.viewport.destroy()
     this.game.destroy()
     this.world.clear()
-    this.gametime = 0
+    this.gametime = null
+    this.slaptime = null
     window.game = undefined
   }
 
@@ -446,7 +449,7 @@ class Game {
     this.viewport.scale.x = this.camera.z
     this.viewport.scale.y = this.camera.z
     if (ratio < 1.6) this.viewport.scale.y *= (ratio / 1.6)
-    if (ratio > 1.6) this.viewport.scale.y *= (ratio / 1.6)
+    if (ratio > 1.6) this.viewport.scale.x /= (ratio / 1.6)
   }
 
   load (callback) {
@@ -494,6 +497,20 @@ class Game {
     this.addEntity('ground', null, null, { type: 'plane', group: 'ground', position: [0, 2.3], angle: Math.PI })
     this.addEntity('right_wall', null, null, { type: 'plane', group: 'ground', position: [4, 0], angle: Math.PI / 2 })
     this.addEntity('left_wall', null, null, { type: 'plane', group: 'ground', position: [-4, 0], angle: (3 * Math.PI) / 2 })
+
+    this.world.on('impact', (event) => {
+      if ((event.shapeA.collisionGroup === COLLISION_GROUPS.jack && event.shapeB.collisionGroup === COLLISION_GROUPS.dave) || (event.shapeA.collisionGroup === COLLISION_GROUPS.dave && event.shapeB.collisionGroup === COLLISION_GROUPS.jack)) {
+        if (event.contactEquation.multiplier > 30 && (!this.slaptime || this.gametime - this.slaptime > 0.1)) {
+          let id = this.sounds.slap.play()
+          let volume = (event.contactEquation.multiplier - 30) / 25
+          if (volume > 1) {
+            volume = 1
+          }
+          this.sounds.slap.volume(volume, id)
+          this.slaptime = this.gametime
+        }
+      }
+    })
 
     if (this.data.music) {
       this.sounds.music.play()
