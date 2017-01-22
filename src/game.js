@@ -455,8 +455,13 @@ class Game {
   load (callback) {
     this.sounds = {}
     for (var sound of SOUNDS) {
+      let loop = false
+      if (sound === 'music') {
+        loop = true
+      }
       this.sounds[sound] = new Howl({
-        src: [require(`assets/${sound}.webm`), require(`assets/${sound}.mp3`)]
+        src: [require(`assets/${sound}.webm`), require(`assets/${sound}.mp3`)],
+        loop: loop
       })
     }
     for (var texture of TEXTURES) {
