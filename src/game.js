@@ -11,7 +11,8 @@ const FPS = 60
 
 const SOUNDS = [
   'wilhelm',
-  'music'
+  'music',
+  'slap'
 ]
 
 const TEXTURES = [
@@ -207,10 +208,10 @@ class Ragdoll extends Entity {
     this.addJoint('right_upper_arm', 'right_forearm', [-0.58, -1.18], [0.5, 0])
     this.addJoint('right_forearm', 'right_hand', [-0.46, -0.66], [0.1, 0.1])
     this.addJoint('torso', 'hips', [0.05, -0.77], [0.04, 0.04])
-    this.addJoint('hips', 'left_upper_leg', [0.28, -0.26], [0.3, 0.3])
+    this.addJoint('hips', 'left_upper_leg', [0.28, -0.26], [0.2, 0.2])
     this.addJoint('left_upper_leg', 'left_shin', [0.43, 0.13], [0, 0.5])
     this.addJoint('left_shin', 'left_foot', [0.45, 0.56], [0.3, 0.3])
-    this.addJoint('hips', 'right_upper_leg', [-0.20, -0.26], [0.3, 0.3])
+    this.addJoint('hips', 'right_upper_leg', [-0.20, -0.26], [0.2, 0.2])
     this.addJoint('right_upper_leg', 'right_shin', [-0.31, 0.13], [0.5, 0])
     this.addJoint('right_shin', 'right_foot', [-0.33, 0.56], [0.3, 0.3])
 
@@ -239,8 +240,8 @@ class Ragdoll extends Entity {
     })
 
     // because backwards everything...
-    this.addJoint('right_hand', 'left_stick', this.extremeties.right_hand, [2, 2], 8)
-    this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, [2, 2], 8)
+    this.addJoint('right_hand', 'left_stick', this.extremeties.right_hand, [2, 2], 20)
+    this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, [2, 2], 20)
     this.addJoint('right_foot', 'left_trigger', this.extremeties.right_foot, [2, 2], 20)
     this.addJoint('left_foot', 'right_trigger', this.extremeties.left_foot, [2, 2], 20)
   }
@@ -317,6 +318,7 @@ class Game {
     this.state = 'waiting'
     this.data = data
     this.gametime = null
+    this.slaptime = null
     this.frequency = 1.0 / FPS
     this.canvas = document.getElementById(elementId)
     this.camera = {
@@ -362,7 +364,8 @@ class Game {
     this.viewport.destroy()
     this.game.destroy()
     this.world.clear()
-    this.gametime = 0
+    this.gametime = null
+    this.slaptime = null
     window.game = undefined
   }
 
@@ -446,14 +449,19 @@ class Game {
     this.viewport.scale.x = this.camera.z
     this.viewport.scale.y = this.camera.z
     if (ratio < 1.6) this.viewport.scale.y *= (ratio / 1.6)
-    if (ratio > 1.6) this.viewport.scale.y *= (ratio / 1.6)
+    if (ratio > 1.6) this.viewport.scale.x /= (ratio / 1.6)
   }
 
   load (callback) {
     this.sounds = {}
     for (var sound of SOUNDS) {
+      let loop = false
+      if (sound === 'music') {
+        loop = true
+      }
       this.sounds[sound] = new Howl({
-        src: [require(`assets/${sound}.webm`), require(`assets/${sound}.mp3`)]
+        src: [require(`assets/${sound}.webm`), require(`assets/${sound}.mp3`)],
+        loop: loop
       })
     }
     for (var texture of TEXTURES) {
@@ -494,6 +502,20 @@ class Game {
     this.addEntity('ground', null, null, { type: 'plane', group: 'ground', position: [0, 2.3], angle: Math.PI })
     this.addEntity('right_wall', null, null, { type: 'plane', group: 'ground', position: [4, 0], angle: Math.PI / 2 })
     this.addEntity('left_wall', null, null, { type: 'plane', group: 'ground', position: [-4, 0], angle: (3 * Math.PI) / 2 })
+
+    this.world.on('impact', (event) => {
+      if ((event.shapeA.collisionGroup === COLLISION_GROUPS.jack && event.shapeB.collisionGroup === COLLISION_GROUPS.dave) || (event.shapeA.collisionGroup === COLLISION_GROUPS.dave && event.shapeB.collisionGroup === COLLISION_GROUPS.jack)) {
+        if (event.contactEquation.multiplier > 30 && (!this.slaptime || this.gametime - this.slaptime > 0.1)) {
+          let id = this.sounds.slap.play()
+          let volume = (event.contactEquation.multiplier - 30) / 25
+          if (volume > 1) {
+            volume = 1
+          }
+          this.sounds.slap.volume(volume, id)
+          this.slaptime = this.gametime
+        }
+      }
+    })
 
     if (this.data.music) {
       this.sounds.music.play()
@@ -538,8 +560,8 @@ class Game {
     this.addEffect(new Spinner([1, 0], 0xff00ff, 4, 0, 10, 0, 15, 15))
     this.addEffect(new Spinner([2, 1], 0x00ff00, 8, 0, 2, 0, 8, 5))
     this.addEffect(new Spinner([-2, 2], 0xff0000, 8, 0, 2.7, 10, 20, 15))
-    // this.addEffect(new Wave([0, 0], 0x00ff00, 4, 100, 0, 5, 20, 2.4))
-    this.targetWave = new Wave([0, 0], 0x9999ff, 4, 2, 0, 5, 1, 1.1, 0.75)
+    this.addEffect(new Wave([0, 0], 0xffaa00, 4, 100, 0, 5, 20, 2.4))
+    this.targetWave = new Wave([0, 0], 0x9999ff, 3, 2, 0, 5, 1, 0.8, 0.75)
     this.addEffect(this.targetWave)
     this.spark1 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
     this.addEffect(this.spark1)
@@ -549,6 +571,14 @@ class Game {
     this.addEffect(this.spark3)
     this.spark4 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
     this.addEffect(this.spark4)
+    this.spark5 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
+    this.addEffect(this.spark5)
+    this.spark6 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
+    this.addEffect(this.spark6)
+    this.spark7 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
+    this.addEffect(this.spark7)
+    this.spark8 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
+    this.addEffect(this.spark8)
   }
 
   addEffect (effect) {
@@ -568,14 +598,38 @@ class Game {
     this.checkSparkWave(this.spark2, this.targetWave)
     this.checkSparkWave(this.spark3, this.targetWave)
     this.checkSparkWave(this.spark4, this.targetWave)
+    this.spark5.emitterContainer.position = this.entities.dave.parts.left_foot.sprite.position
+    this.spark6.emitterContainer.position = this.entities.dave.parts.right_foot.sprite.position
+    this.spark7.emitterContainer.position = this.entities.jack.parts.left_foot.sprite.position
+    this.spark8.emitterContainer.position = this.entities.jack.parts.right_foot.sprite.position
+    this.checkSparkWave(this.spark5, this.targetWave)
+    this.checkSparkWave(this.spark6, this.targetWave)
+    this.checkSparkWave(this.spark7, this.targetWave)
+    this.checkSparkWave(this.spark8, this.targetWave)
   }
 
   checkSparkWave (spark, wave) {
     let wavePos = wave.getWaveforX(spark.emitterContainer.position.x)
     if (Math.abs(wavePos[1] - spark.emitterContainer.position.y) < 0.2) {
       spark.emitter.maxParticles = 200
+      spark.emitterContainer.scale.x *= 1.01
+      spark.emitterContainer.scale.y *= 1.01
     } else {
       spark.emitter.maxParticles = 0
+      spark.emitterContainer.scale.x *= 0.99
+      spark.emitterContainer.scale.y *= 0.99
+    }
+    if (spark.emitterContainer.scale.x < 0.75) {
+      spark.emitterContainer.scale.x = 0.75
+    }
+    if (spark.emitterContainer.scale.y < 0.75) {
+      spark.emitterContainer.scale.y = 0.75
+    }
+    if (spark.emitterContainer.scale.x > 1.5) {
+      spark.emitterContainer.scale.x = 1.5
+    }
+    if (spark.emitterContainer.scale.y > 1.5) {
+      spark.emitterContainer.scale.y = 1.5
     }
   }
 
