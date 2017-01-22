@@ -3,6 +3,8 @@ import 'pixi.js'
 import p2 from 'p2'
 import { Howl } from 'howler'
 import { scanGamepads, getGamepads } from 'gamepad'
+import { Spinner } from 'spinner'
+import { Wave } from 'wave'
 
 const FPS = 60
 
@@ -291,44 +293,6 @@ class Ragdoll extends Entity {
   }
 }
 
-class Spinner {
-  constructor (position, color, beat = 4, offset = 0, spinSpeed = 10, initialAngle = 0, width = 10, blur = 10) {
-    beat = beat * 7 / 4
-    this.blur = blur
-    this.beat = beat
-    this.offset = offset
-    this.spinSpeed = spinSpeed
-    this.gfx = new PIXI.Graphics()
-    this.gfx.position.x = position[0]
-    this.gfx.position.y = position[1]
-    this.gfx.clear()
-    this.gfx.lineStyle(width / 100, color)
-    this.gfx.moveTo(0.0, -6)
-    this.gfx.lineTo(0.0, 6)
-    var blurFilter = new PIXI.filters.BlurFilter()
-    blurFilter.blur = 10
-    this.gfx.filters = [blurFilter]
-    this.gfx.blendMode = PIXI.BLEND_MODES.SCREEN
-    this.gfx.transform.rotation = initialAngle
-  }
-
-  pushGame (game) {
-    game.viewport.addChild(this.gfx)
-  }
-
-  popGame (game) {
-    game.viewport.removeChild(this.gfx)
-  }
-
-  update (game) {
-    let time = (game.gametime + this.offset)
-    this.gfx.transform.rotation = time / this.spinSpeed
-    let amp = Math.sin(time * this.beat)
-    this.gfx.filters[0].blur = amp * this.blur + this.blur * 2
-  }
-
-}
-
 class Game {
   constructor (elementId, data) {
     this.state = 'waiting'
@@ -554,6 +518,8 @@ class Game {
     this.addEffect(new Spinner([1, 0], 0xff00ff, 4, 0, 10, 0, 15, 15))
     this.addEffect(new Spinner([2, 1], 0x00ff00, 8, 0, 2, 0, 8, 5))
     this.addEffect(new Spinner([-2, 2], 0xff0000, 8, 0, 2.7, 10, 20, 15))
+    this.addEffect(new Wave([0, 0], 0x00ff00, 4, 100, 0, 5, 20, 2.4))
+    this.addEffect(new Wave([0, 0], 0x0000ff, 4, 2, 0, 10, 5, 1.1))
   }
 
   addEffect (effect) {
