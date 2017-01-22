@@ -16,7 +16,7 @@
       return {
         score: 0,
         debug: false,
-        music: false,
+        music: true,
         message: ''
       }
     },
