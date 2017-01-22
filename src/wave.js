@@ -15,6 +15,7 @@ class Wave {
     this.gfx.position.x = position[0]
     this.gfx.position.y = position[1]
     this.beating = false
+    this.points = []
     var blurFilter = new PIXI.filters.BlurFilter()
     blurFilter.blur = blur
     this.gfx.filters = [blurFilter]
@@ -43,22 +44,38 @@ class Wave {
     this.gfx.lineStyle(this.width / 100, this.color)
 
     // draw wave
-    let points = []
+    this.points = []
     for (var i = 0; i < num; i += 1) {
-      points.push(Math.sin(time * this.beat + (i / num) * this.lambda * 10))
+      this.points.push(Math.sin(time * this.beat + (i / num) * this.lambda * 10))
     }
 
     let x, y
     for (i = 0; i < num; i += 1) {
       x = ((i - num / 2) / num) * width
-      y = points[i] * height
-      points[i] = [x, y]
+      y = this.points[i] * height
+      this.points[i] = [x, y]
     }
 
-    this.gfx.moveTo(...points[0])
+    this.gfx.moveTo(...this.points[0])
     for (i = 1; i < num; i += 1) {
-      this.gfx.lineTo(...points[i])
+      this.gfx.lineTo(...this.points[i])
     }
+  }
+
+  getWaveforX (x) {
+    var bestY = null
+    var bestX = null
+    var bestDist = null
+    var dist
+    for (var point of this.points) {
+      dist = Math.abs(point[0] - x)
+      if (bestDist === null || dist < bestDist) {
+        bestDist = dist
+        bestY = point[1]
+        bestX = point[0]
+      }
+    }
+    return [bestX, bestY]
   }
 }
 
