@@ -12,7 +12,9 @@ const FPS = 60
 const SOUNDS = [
   'wilhelm',
   'music',
-  'slap'
+  'slap',
+  'cheer',
+  'camera'
 ]
 
 const TEXTURES = [
@@ -54,11 +56,13 @@ const TEXTURES = [
 ]
 
 const COLLISION_GROUPS = {
-  ground: 0b0001,
-  jack: 0b0010,
-  dave: 0b0100,
-  other: 0b1000,
-  all: 0b1111
+  ground: 0b000001,
+  jack_body: 0b000010,
+  jack_fist: 0b000110,
+  dave_body: 0b001000,
+  dave_fist: 0b011000,
+  other: 0b100000,
+  all: 0b111111
 }
 
 class Entity {
@@ -253,11 +257,17 @@ class Ragdoll extends Entity {
   }
 
   addPart (textures, name, offset, rotation, mass) {
+    let group = this.name
+    if (name === 'left_hand' || name === 'right_hand') {
+      group += '_fist'
+    } else {
+      group += '_body'
+    }
     this.parts[name] = new Entity(textures[`${this.name}_${name}`], this.scale, {
       mass: mass,
       position: this.relative(offset),
       angle: rotation,
-      group: this.name
+      group: group
     })
   }
 
@@ -381,6 +391,8 @@ class Game {
     this.debugLayer = null
     this.entities = {}
     this.effects = []
+    this.applause = false
+    this.flash = false
   }
 
   boot (callback) {
@@ -411,11 +423,14 @@ class Game {
     PIXI.loader.reset()
     this.removeEffects()
     this.viewport.destroy()
+    this.white.destroy()
     this.splash.destroy()
     this.game.destroy()
     this.world.clear()
     this.gametime = null
     this.slaptime = null
+    this.applause = false
+    this.flash = false
     window.game = undefined
   }
 
@@ -486,10 +501,12 @@ class Game {
     this.world.gravity[1] *= -1
     this.game = new PIXI.Application(800, 500, { view: this.canvas })
     window.game = this
+    this.white = new PIXI.Container()
     this.splash = new PIXI.Container()
     this.viewport = new PIXI.Container()
     this.game.stage.addChild(this.viewport)
     this.game.stage.addChild(this.splash)
+    this.game.stage.addChild(this.white)
     this.playersReady = []
   }
 
@@ -498,15 +515,21 @@ class Game {
     this.viewport.position.y = this.game.renderer.height / 2 + this.camera.y
     this.splash.position.x = this.game.renderer.width / 2 + this.camera.x
     this.splash.position.y = this.game.renderer.height / 2 + this.camera.y
+    this.white.position.x = this.game.renderer.width / 2 + this.camera.x
+    this.white.position.y = this.game.renderer.height / 2 + this.camera.y
     let ratio = this.canvas.scrollWidth / this.canvas.scrollHeight
     this.viewport.scale.x = this.camera.z
     this.viewport.scale.y = this.camera.z
     this.splash.scale.x = this.camera.z
     this.splash.scale.y = this.camera.z
+    this.white.scale.x = this.camera.z
+    this.white.scale.y = this.camera.z
     if (ratio < 1.6) this.viewport.scale.y *= (ratio / 1.6)
     if (ratio > 1.6) this.viewport.scale.x /= (ratio / 1.6)
     if (ratio < 1.6) this.splash.scale.y *= (ratio / 1.6)
     if (ratio > 1.6) this.splash.scale.x /= (ratio / 1.6)
+    if (ratio < 1.6) this.white.scale.y *= (ratio / 1.6)
+    if (ratio > 1.6) this.white.scale.x /= (ratio / 1.6)
   }
 
   load (callback) {
@@ -563,6 +586,13 @@ class Game {
     this.splash.addChild(rock)
     this.splash.addChild(vomit)
 
+    let nothing = new PIXI.Graphics()
+    nothing.beginFill(0xFFFFFF)
+    nothing.drawRect(-4, -3, 8, 6)
+    this.white.addChild(nothing)
+    this.white.visible = false
+    this.white.alpha = 0
+
     this.addEntity('stage', this.textures.stage, 0.01)
 
     this.entities['jack'] = new Ragdoll('jack', [-1.2, 1.4], 0.004, this.textures)
@@ -576,12 +606,12 @@ class Game {
     this.addEntity('left_wall', null, null, { type: 'plane', group: 'ground', position: [-4, 0], angle: (3 * Math.PI) / 2 })
 
     this.world.on('impact', (event) => {
-      if ((event.shapeA.collisionGroup === COLLISION_GROUPS.jack && event.shapeB.collisionGroup === COLLISION_GROUPS.dave) || (event.shapeA.collisionGroup === COLLISION_GROUPS.dave && event.shapeB.collisionGroup === COLLISION_GROUPS.jack)) {
+      if ((event.shapeA.collisionGroup === COLLISION_GROUPS.jack_fist && event.shapeB.collisionGroup === COLLISION_GROUPS.dave_body) || (event.shapeA.collisionGroup === COLLISION_GROUPS.dave_body && event.shapeB.collisionGroup === COLLISION_GROUPS.jack_fist) || (event.shapeA.collisionGroup === COLLISION_GROUPS.jack_body && event.shapeB.collisionGroup === COLLISION_GROUPS.dave_fist) || (event.shapeA.collisionGroup === COLLISION_GROUPS.dave_fist && event.shapeB.collisionGroup === COLLISION_GROUPS.jack_body) || (event.shapeA.collisionGroup === COLLISION_GROUPS.dave_fist && event.shapeB.collisionGroup === COLLISION_GROUPS.jack_fist) || (event.shapeA.collisionGroup === COLLISION_GROUPS.jack_fist && event.shapeB.collisionGroup === COLLISION_GROUPS.dave_fist)) {
         if (event.contactEquation.multiplier > 60 && (!this.slaptime || this.gametime - this.slaptime > 0.1)) {
           let id = this.sounds.slap.play()
-          let volume = ((event.contactEquation.multiplier - 60) / 100)
-          if (volume > 0.4) {
-            volume = 0.4
+          let volume = ((event.contactEquation.multiplier - 50) / 100)
+          if (volume > 0.25) {
+            volume = 0.25
           }
           this.sounds.slap.volume(volume, id)
           this.slaptime = this.gametime
@@ -633,6 +663,8 @@ class Game {
     let location = elapsed % loop
     let chunk = Math.floor(location / 7.619)
     if (chunk < 1) {
+      this.applause = false
+      this.flash = false
       this.cameraReset()
       this.targetWave.height = 0.2
       this.targetWave.beat = 4
@@ -642,7 +674,14 @@ class Game {
       this.spinner4.gfx.alpha = 0
       this.backbeat.gfx.alpha = 0
       this.targetWave.gfx.alpha = 0.1
-      if (location < 3) {
+      if (this.white.alpha > 0) {
+        if (location > 0.5) {
+          this.white.alpha -= 0.05
+        }
+      } else {
+        this.white.visible = false
+      }
+      if (location < 4) {
         this.splash.visible = true
         if (this.viewport.alpha > 0.0) {
           this.viewport.alpha -= 0.02
@@ -699,25 +738,58 @@ class Game {
       this.backbeat.gfx.alpha = 1
       this.targetWave.gfx.alpha = 0.6
     } else {
-      this.cameraPulse(14)
-      this.cameraVomit(7)
-      this.targetWave.height = 1.0
-      this.targetWave.beat = 8
-      this.spinner1.gfx.alpha = 1
-      this.spinner2.gfx.alpha = 1
-      this.spinner3.gfx.alpha = 1
-      this.spinner4.gfx.alpha = 1
-      this.spinner3.spinSpeed = 1
-      this.spinner4.spinSpeed = 0.5
-      this.backbeat.gfx.alpha = 1
-      this.targetWave.gfx.alpha = 0.6
+      if (location < 75) {
+        this.cameraPulse(14)
+        this.cameraVomit(7)
+        this.targetWave.height = 1.0
+        this.targetWave.beat = 8
+        this.spinner1.gfx.alpha = 1
+        this.spinner2.gfx.alpha = 1
+        this.spinner3.gfx.alpha = 1
+        this.spinner4.gfx.alpha = 1
+        this.spinner3.spinSpeed = 1
+        this.spinner4.spinSpeed = 0.5
+        this.backbeat.gfx.alpha = 1
+        this.targetWave.gfx.alpha = 0.6
+      } else {
+        this.cameraReset()
+        this.targetWave.height = 0.2
+        this.targetWave.beat = 4
+        this.spinner1.gfx.alpha = 0
+        this.spinner2.gfx.alpha = 0
+        this.spinner3.gfx.alpha = 0
+        this.spinner4.gfx.alpha = 0
+        this.backbeat.gfx.alpha = 0
+        this.targetWave.gfx.alpha = 0.1
+      }
+      if (location > 68 && !this.applause) {
+        this.applause = true
+        this.sounds.cheer.play()
+      }
+      if (location > 74 && !this.flash) {
+        this.flash = true
+        this.white.alpha = 0
+        this.white.visible = true
+        this.sounds.camera.play()
+      }
+      if (this.flash && location > 75 && this.white.alpha < 1) {
+        if (this.white.alpha === 0) {
+          let screenShot = PIXI.RenderTexture.create(this.game.renderer.width, this.game.renderer.height)
+          this.game.renderer.render(this.game.stage, screenShot)
+          let photo = new PIXI.Sprite(screenShot)
+          photo.anchor.x = 0.5
+          photo.anchor.y = 0.5
+          photo.scale.x = 0.003
+          photo.scale.y = 0.004
+          photo.position.x = -2.5 + 5 * Math.random()
+          photo.position.y = -1.5 + 3 * Math.random()
+          photo.rotation = -0.2 + 0.4 * Math.random()
+          photo.tint = 0xF49A2F
+          this.splash.addChild(photo)
+        }
+        this.white.alpha += 0.2
+      }
     }
-    // start playing crowd cheering
-    // flash quickly to white
-    // play camera sound
-    // grab still frame
-    // overlay on splash screen at random angle
-    // fade slowly back to splash screen
   }
 
   cameraPulse (beat) {
