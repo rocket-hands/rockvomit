@@ -82,6 +82,7 @@ class Entity {
       delete (physics.type)
       delete (physics.group)
       this.body = new p2.Body(physics)
+      this.body.damping = 0.5
       switch (type) {
         case 'plane':
           shape = new p2.Plane()
@@ -174,16 +175,18 @@ class Ragdoll extends Entity {
     this.position = position
     this.scale = scale
     this.parts = {}
+    this.leftFoot = 0
+    this.rightFoot = 0
     this.joints = []
     this.extremeties = {
       left_hand: [0.50, -0.6],
       right_hand: [-0.42, -0.55],
       left_foot: [0.55, 0.7],
       right_foot: [-0.45, 0.7],
-      left_stick: [-0.5, -2],
-      right_stick: [0.5, -2],
-      left_trigger: [1, -0.5],
-      right_trigger: [-1, -0.5]
+      left_stick: [-0.5, -0.5],
+      right_stick: [0.5, -0.5],
+      left_trigger: [-0.7, 0],
+      right_trigger: [0.7, 0]
     }
 
     this.addPart(textures, 'left_foot', this.extremeties.left_foot, -1.4, 1)
@@ -209,43 +212,44 @@ class Ragdoll extends Entity {
     this.addJoint('torso', 'right_upper_arm', [-0.45, -1.68], null)
     this.addJoint('right_upper_arm', 'right_forearm', [-0.58, -1.18], [0.5, 0])
     this.addJoint('right_forearm', 'right_hand', [-0.46, -0.66], [0.1, 0.1])
-    this.addJoint('torso', 'hips', [0.05, -0.77], [0.04, 0.04])
-    this.addJoint('hips', 'left_upper_leg', [0.28, -0.26], [0.2, 0.2])
-    this.addJoint('left_upper_leg', 'left_shin', [0.43, 0.13], [0, 0.5])
-    this.addJoint('left_shin', 'left_foot', [0.45, 0.56], [0.3, 0.3])
-    this.addJoint('hips', 'right_upper_leg', [-0.20, -0.26], [0.2, 0.2])
-    this.addJoint('right_upper_leg', 'right_shin', [-0.31, 0.13], [0.5, 0])
-    this.addJoint('right_shin', 'right_foot', [-0.33, 0.56], [0.3, 0.3])
+    this.addJoint('torso', 'hips', [0.05, -0.77], [0.15, 0.15])
+    this.addJoint('hips', 'left_upper_leg', [0.10, -0.26], [0.04, 0.04])
+    this.addJoint('left_upper_leg', 'left_shin', [0.38, 0.18], [0, 0.3])
+    this.addJoint('left_shin', 'left_foot', [0.45, 0.56], [0.2, 0.2])
+    this.addJoint('hips', 'right_upper_leg', [-0.20, -0.26], [0.04, 0.04])
+    this.addJoint('right_upper_leg', 'right_shin', [-0.31, 0.08], [0.3, 0])
+    this.addJoint('right_shin', 'right_foot', [-0.33, 0.56], [0.2, 0.2])
 
-    this.parts.head.body.gravityScale = -10
-    this.parts.torso.body.gravityScale = -5
+    this.parts.head.body.gravityScale = -4
+    this.parts.torso.body.gravityScale = -2
+    this.parts.hips.body.gravityScale = -2
 
     this.parts.left_stick = new Entity(null, 1, {
       type: 'circle',
       mass: 0,
-      position: this.relative(this.extremeties.left_stick)
+      position: this.torsoRelative(this.extremeties.left_stick)
     })
     this.parts.right_stick = new Entity(null, 1, {
       type: 'circle',
       mass: 0,
-      position: this.relative(this.extremeties.right_stick)
+      position: this.torsoRelative(this.extremeties.right_stick)
     })
     this.parts.left_trigger = new Entity(null, 1, {
       type: 'circle',
       mass: 0,
-      position: this.relative(this.extremeties.left_trigger)
+      position: this.torsoRelative(this.extremeties.left_trigger)
     })
     this.parts.right_trigger = new Entity(null, 1, {
       type: 'circle',
       mass: 0,
-      position: this.relative(this.extremeties.right_trigger)
+      position: this.torsoRelative(this.extremeties.right_trigger)
     })
 
     // because backwards everything...
-    this.addJoint('right_hand', 'left_stick', this.extremeties.right_hand, [2, 2], 20)
-    this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, [2, 2], 20)
-    this.addJoint('right_foot', 'left_trigger', this.extremeties.right_foot, [2, 2], 20)
-    this.addJoint('left_foot', 'right_trigger', this.extremeties.left_foot, [2, 2], 20)
+    this.addJoint('right_hand', 'left_stick', this.extremeties.right_hand, [2, 2], 8)
+    this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, [2, 2], 8)
+    this.addJoint('right_foot', 'left_trigger', this.extremeties.right_foot, [2, 2], 40)
+    this.addJoint('left_foot', 'right_trigger', this.extremeties.left_foot, [2, 2], 40)
   }
 
   addPart (textures, name, offset, rotation, mass) {
@@ -271,11 +275,52 @@ class Ragdoll extends Entity {
     return [this.position[0] + position[0], this.position[1] + position[1]]
   }
 
+  torsoRelative (position) {
+    return [this.parts.torso.body.position[0] + position[0], this.parts.torso.body.position[1] + position[1]]
+  }
+
   updateExtremeties (offsets) {
+    let left = 0.0
+    let right = 0.0
     for (var part in offsets) {
-      this.parts[part].body.position = this.relative(this.extremeties[part])
-      this.parts[part].body.position[0] += offsets[part][0] * 2
-      this.parts[part].body.position[1] += offsets[part][1] * 2
+      if (part === 'left_stick') {
+        left = offsets[part][0]
+      } else if (part === 'right_stick') {
+        right = offsets[part][0]
+      }
+    }
+    for (part in offsets) {
+      if (part === 'left_trigger' || part === 'right_trigger') {
+        this.parts[part].body.position = this.relative(this.extremeties[part])
+        if (part === 'left_trigger') {
+          if (offsets[part][1] < 0) {
+            this.leftFoot += left * 0.02
+          }
+          if (this.leftFoot - this.rightFoot < -0.5) {
+            this.leftFoot = this.rightFoot - 0.5
+          }
+          if (this.leftFoot - this.rightFoot > 0.5) {
+            this.leftFoot = this.rightFoot + 0.5
+          }
+          offsets[part][0] = this.leftFoot
+        }
+        if (part === 'right_trigger') {
+          if (offsets[part][1] < 0) {
+            this.rightFoot += right * 0.02
+          }
+          if (this.leftFoot - this.rightFoot < -0.5) {
+            this.rightFoot = this.leftFoot + 0.5
+          }
+          if (this.leftFoot - this.rightFoot > 0.5) {
+            this.rightFoot = this.leftFoot - 0.5
+          }
+          offsets[part][0] = this.rightFoot
+        }
+      } else {
+        this.parts[part].body.position = this.torsoRelative(this.extremeties[part])
+      }
+      this.parts[part].body.position[0] += offsets[part][0] * 2.5
+      this.parts[part].body.position[1] += offsets[part][1] * 2.5
     }
   }
 
@@ -532,9 +577,9 @@ class Game {
 
     this.world.on('impact', (event) => {
       if ((event.shapeA.collisionGroup === COLLISION_GROUPS.jack && event.shapeB.collisionGroup === COLLISION_GROUPS.dave) || (event.shapeA.collisionGroup === COLLISION_GROUPS.dave && event.shapeB.collisionGroup === COLLISION_GROUPS.jack)) {
-        if (event.contactEquation.multiplier > 30 && (!this.slaptime || this.gametime - this.slaptime > 0.1)) {
+        if (event.contactEquation.multiplier > 60 && (!this.slaptime || this.gametime - this.slaptime > 0.1)) {
           let id = this.sounds.slap.play()
-          let volume = ((event.contactEquation.multiplier - 30) / 150) + 0.1
+          let volume = ((event.contactEquation.multiplier - 60) / 100)
           if (volume > 0.4) {
             volume = 0.4
           }
@@ -556,32 +601,25 @@ class Game {
     let dt = ms / 1000 - this.gametime
     if (ms < 2000) {
       this.gametime = ms / 1000
+      this.splash.visible = true
+      this.splash.alpha = 1
       this.viewport.visible = false
+      this.viewport.alpha = 0
     } else if (dt < 5) {
-      if (this.viewport.visible === false) {
-        this.viewport.alpha = 0.1
+      if (!this.started) {
         if (this.data.music) {
           this.sounds.music.play()
         }
         this.started = this.gametime
+        this.viewport.visible = true
       }
-      this.viewport.visible = true
       while (dt > this.frequency) {
         dt -= this.frequency
         this.gametime += this.frequency
         this.update(this.frequency)
-        if (this.splash.visible && this.splash.alpha > 0.0) {
-          this.splash.alpha -= 0.02
-          this.viewport.alpha += 0.02
-        } else {
-          this.splash.visible = false
-          this.viewport.alpha = 1
-        }
-        if (this.started) {
-          let elapsed = this.gametime - this.started
-          this.choreograph(elapsed)
-        }
         this.updateEffects(this.frequency)
+        let elapsed = this.gametime - this.started
+        this.choreograph(elapsed)
       }
     } else {
       this.gametime = ms / 1000
@@ -604,6 +642,21 @@ class Game {
       this.spinner4.gfx.alpha = 0
       this.backbeat.gfx.alpha = 0
       this.targetWave.gfx.alpha = 0.1
+      if (location < 3) {
+        this.splash.visible = true
+        if (this.viewport.alpha > 0.0) {
+          this.viewport.alpha -= 0.02
+          this.splash.alpha += 0.02
+        }
+      } else {
+        if (this.splash.visible && this.splash.alpha > 0.0) {
+          this.splash.alpha -= 0.02
+          this.viewport.alpha += 0.02
+        } else {
+          this.splash.visible = false
+          this.viewport.alpha = 1
+        }
+      }
     } else if (chunk < 2) {
       this.targetWave.height = 0.2
       this.targetWave.beat = 4
@@ -659,6 +712,12 @@ class Game {
       this.backbeat.gfx.alpha = 1
       this.targetWave.gfx.alpha = 0.6
     }
+    // start playing crowd cheering
+    // flash quickly to white
+    // play camera sound
+    // grab still frame
+    // overlay on splash screen at random angle
+    // fade slowly back to splash screen
   }
 
   cameraPulse (beat) {
