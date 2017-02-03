@@ -52,7 +52,8 @@ const TEXTURES = [
   'stage',
   'spark',
   'rock',
-  'vomit'
+  'vomit',
+  'polaroid'
 ]
 
 const COLLISION_GROUPS = {
@@ -254,6 +255,14 @@ class Ragdoll extends Entity {
     this.addJoint('left_hand', 'right_stick', this.extremeties.left_hand, [2, 2], 8)
     this.addJoint('right_foot', 'left_trigger', this.extremeties.right_foot, [2, 2], 40)
     this.addJoint('left_foot', 'right_trigger', this.extremeties.left_foot, [2, 2], 40)
+  }
+
+  reset () {
+    this.leftFoot = 0
+    this.rightFoot = 0
+    let position = this.relative([0, -1.3])
+    this.parts.torso.body.position[0] = position[0]
+    this.parts.torso.body.position[1] = position[1]
   }
 
   addPart (textures, name, offset, rotation, mass) {
@@ -499,7 +508,7 @@ class Game {
   init () {
     this.world = new p2.World()
     this.world.gravity[1] *= -1
-    this.game = new PIXI.Application(800, 500, { view: this.canvas })
+    this.game = new PIXI.Application(800, 500, { view: this.canvas, antialias: true })
     window.game = this
     this.white = new PIXI.Container()
     this.splash = new PIXI.Container()
@@ -675,9 +684,7 @@ class Game {
       this.backbeat.gfx.alpha = 0
       this.targetWave.gfx.alpha = 0.1
       if (this.white.alpha > 0) {
-        if (location > 0.5) {
-          this.white.alpha -= 0.05
-        }
+        this.white.alpha -= 0.05
       } else {
         this.white.visible = false
       }
@@ -687,6 +694,8 @@ class Game {
           this.viewport.alpha -= 0.02
           this.splash.alpha += 0.02
         }
+        this.entities.jack.reset()
+        this.entities.dave.reset()
       } else {
         if (this.splash.visible && this.splash.alpha > 0.0) {
           this.splash.alpha -= 0.02
@@ -738,7 +747,7 @@ class Game {
       this.backbeat.gfx.alpha = 1
       this.targetWave.gfx.alpha = 0.6
     } else {
-      if (location < 75) {
+      if (location < 76) {
         this.cameraPulse(14)
         this.cameraVomit(7)
         this.targetWave.height = 1.0
@@ -766,28 +775,44 @@ class Game {
         this.applause = true
         this.sounds.cheer.play()
       }
-      if (location > 74 && !this.flash) {
+      if (location > 75 && !this.flash) {
         this.flash = true
         this.white.alpha = 0
         this.white.visible = true
         this.sounds.camera.play()
       }
-      if (this.flash && location > 75 && this.white.alpha < 1) {
+      if (this.flash && location > 76 && this.white.alpha < 1) {
         if (this.white.alpha === 0) {
-          let screenShot = PIXI.RenderTexture.create(this.game.renderer.width, this.game.renderer.height)
+          let screenShot = PIXI.RenderTexture.create(800, 500)
           this.game.renderer.render(this.game.stage, screenShot)
           let photo = new PIXI.Sprite(screenShot)
           photo.anchor.x = 0.5
           photo.anchor.y = 0.5
-          photo.scale.x = 0.003
-          photo.scale.y = 0.004
+          photo.width = 2
+          photo.height = 2
           photo.position.x = -2.5 + 5 * Math.random()
           photo.position.y = -1.5 + 3 * Math.random()
-          photo.rotation = -0.2 + 0.4 * Math.random()
+          photo.rotation = -0.3 + 0.6 * Math.random()
           photo.tint = 0xF49A2F
           this.splash.addChild(photo)
+          let frame = new PIXI.Sprite(this.textures.polaroid)
+          frame.anchor.x = 0.5
+          frame.anchor.y = 0.5
+          frame.width = 2
+          frame.height = 2
+          frame.position.x = photo.position.x
+          frame.position.y = photo.position.y
+          frame.rotation = photo.rotation
+          this.splash.addChild(frame)
         }
         this.white.alpha += 0.2
+      }
+      if (this.flash && location > 76 && this.white.alpha >= 1) {
+        this.splash.visible = true
+        this.splash.alpha = 1
+        this.viewport.alpha = 0
+        this.entities.jack.reset()
+        this.entities.dave.reset()
       }
     }
   }
