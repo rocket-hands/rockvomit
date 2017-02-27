@@ -850,7 +850,7 @@ class Game {
     this.addEffect(this.spinner4)
     this.backbeat = new Wave([0, 0], 0xffaa00, 4, 100, 0, 5, 20, 2.4)
     this.addEffect(this.backbeat)
-    this.targetWave = new Wave([0, 0], 0x9999ff, 3 * this.timeprop, 2, 29, 5, 1, 0.8, 0.75)
+    this.targetWave = new Wave([0, 0], 0xff00ff, 3 * this.timeprop, 2, 29, 5, 1, 0.8, 0.75)
     this.addEffect(this.targetWave)
     this.spark1 = new Sparks([0, 0], PIXI.Texture.fromImage('spark'))
     this.addEffect(this.spark1)
